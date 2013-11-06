@@ -3,14 +3,17 @@ namespace Bot\CoreBundle\Helper;
 
 class XMLHelper
 {
-    public function __construct()
+    private $container;
+
+    public function __construct($container)
     {
+        $this->container = $container;
         $this->setCards();
     }
 
     public function getCards()
     {
-        $fileName = dirname(CMD_OPTYMAIZER).'/cards.xml';
+        $fileName = $this->container->getParameter('optimizer_path').'/cards.xml';
         $xml = (array) simplexml_load_file($fileName);
         if (!$xml) {
             return NULL;

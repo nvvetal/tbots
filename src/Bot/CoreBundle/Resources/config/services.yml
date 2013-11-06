@@ -1,3 +1,23 @@
 parameters:
 
 services:
+  helper.xml:
+    class: Bot\CoreBundle\Helper\XMLHelper
+    arguments: [@service_container]
+
+  helper.bot:
+    class: Bot\CoreBundle\Helper\BotHelper
+    arguments: [@service_container]
+
+  helper.cards:
+    class: Bot\CoreBundle\Helper\CardsHelper
+    arguments: [@helper.xml]
+
+  helper.deck:
+    class: Bot\CoreBundle\Helper\DeckHelper
+    arguments: [@helper.cards]
+
+  helper.optimizer:
+    class: Bot\CoreBundle\Helper\OptimizerHelper
+    arguments: [@service_container, @helper.cards, @helper.deck]
+

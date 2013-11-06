@@ -1,5 +1,7 @@
 <?php
-class Tyrant_User extends Tyrant_Client
+namespace Bot\CoreBundle\Classes;
+
+class User extends Client
 {
     protected $_initialized = false;
     protected $_optimizedDecks = array();
@@ -9,43 +11,6 @@ class Tyrant_User extends Tyrant_Client
     {
         $this->userId = $userId;
         $this->flashCode = $flashCode;
-        //$this->_initClient();
-    }
-
-    public function getOwnedCardsFileName()
-    {
-        return dirname(CMD_OPTYMAIZER).'/'.$this->userId.'.txt';
-    }
-
-    protected function _initClient()
-    {
-        if ($this->_initialized) {
-            return true;
-        }
-
-        $this->init();
-        $this->_initialized = true;
-
-        // write user cards file.
-        umask(0);
-        $f = fopen($this->getOwnedCardsFileName(), 'w');
-        foreach ($this->myCards as $cardId => $cardInfo) {
-            if ($cardId > 10000) {
-                $cardId -= 10000;
-            }
-
-            $card = Tyrant_Cards::getCardById($cardId);
-            if ($card === false) {
-                echo "cant load card: ".$cardId."\n";
-            }
-            $lvl = '';
-            if ($card->isUpdatedCard()) {
-                $lvl = ', Lvl2';
-            }
-            $line = sprintf('[%d] %s%s (%d)', $cardId, $card->getName(), $lvl, $cardInfo['num_owned']);
-            fwrite($f, $line."\n");
-        }
-        fclose($f);
     }
 
     public function getWinRateForDeckHash($hash)

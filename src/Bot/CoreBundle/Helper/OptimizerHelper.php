@@ -12,11 +12,13 @@ class OptimizerHelper
 
     private $cardsHelper;
     private $deckHelper;
+    private $container;
 
-    public function __construct(CardsHelper $CardsHelper, DeckHelper $DeckHelper)
+    public function __construct($container, CardsHelper $CardsHelper, DeckHelper $DeckHelper)
     {
         $this->cardsHelper = $CardsHelper;
         $this->deckHelper = $DeckHelper;
+        $this->container = $container;
     }
 
     public function optimize($enemyDeckHash, Bot $bot)
@@ -73,12 +75,14 @@ class OptimizerHelper
 
     protected function call($enemyDeckHash, Bot $bot)
     {
+        $botHelper = $this->container->get('helper.bot');
+        $optimizerPath = $this->container->getParameter('optimizer_path');
         $result = "";
-        chdir(dirname(CMD_OPTYMAIZER));
-        $command = CMD_OPTYMAIZER.' '
+
+        $command = $optimizerPath.' '
             .escapeshellarg($this->getDefaultDeckHash()).' '
             .escapeshellarg($enemyDeckHash).' '
-            .'-o='.escapeshellarg($bot->getOwnedCardsFileName()).' '
+            .'-o='.escapeshellarg($botHelper->getOwnedCardsFileName($bot)).' '
             .'climb '.self::OPTIMIZE_RUN_CNT;
         if ($p = popen("($command)2>&1","r")) {
             while (!feof($p)) {

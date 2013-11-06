@@ -13,4 +13,4 @@ parameters:
 
     locale:            en
     secret:            ThisTokenIsNotSoSecretChangeIt
-    bot_optimizer_path: ~
+    optimizer_path: ~

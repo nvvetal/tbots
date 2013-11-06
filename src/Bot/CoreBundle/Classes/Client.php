@@ -1,5 +1,7 @@
 <?php
-abstract class Tyrant_Client
+namespace Bot\CoreBundle\Classes;
+
+abstract class Client
 {
     protected $userId = '';
     protected $flashCode = '';
@@ -112,7 +114,7 @@ abstract class Tyrant_Client
         $this->version = $version;
     }
 
-    protected function init()
+    public function init()
     {
         $init = $this->request('init');
 
@@ -474,6 +476,11 @@ abstract class Tyrant_Client
         }
 
         return array('ok' => false, 'wait' => $this->tileAttackCD[$systemId.':'.$systemSlotId] - time());
+    }
+
+    public function getMyCards()
+    {
+        return $this->myCards;
     }
 }
 

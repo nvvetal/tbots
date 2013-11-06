@@ -113,8 +113,6 @@ class Bot
      */
     protected $lastActionTime;
 
-    private $path;
-
     /**
      * Get id
      *
@@ -447,14 +445,6 @@ class Bot
         return $this->lastActionTime;
     }
 
-    public function setPath($path)
-    {
-        $this->path = $path;
-    }
 
-    public function getOwnedCardsFileName()
-    {
-        return $this->path.'/'.$this->getUserId().'.txt';
-    }
 
 }
