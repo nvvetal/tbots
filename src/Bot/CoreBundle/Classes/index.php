@@ -1,5 +1,4 @@
 <?php
-require_once(__DIR__.'/config.php');
 
 $tyrant = new Tyrant(429);
 

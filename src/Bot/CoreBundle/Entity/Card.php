@@ -1,9 +1,14 @@
 <?php
-class Tyrant_Card
+
+namespace Bot\CoreBundle\Entity;
+
+class Card
 {
+    const UPGRADED_SET = 5002; //wtf?
+
     protected $_data;
 
-    public function __construct($data)
+    public function setCardByData($data)
     {
         $this->_data = $data;
     }
@@ -19,7 +24,7 @@ class Tyrant_Card
 
     public function isUpdatedCard()
     {
-        return $this->getSet() == Tyrant_Cards::UPGRADED_SET;
+        return $this->getSet() == self::UPGRADED_SET;
     }
 
     public function getName()
@@ -51,4 +56,7 @@ class Tyrant_Card
     {
         return $this->getId() >= 1000 && $this->getId() < 2000;
     }
+
 }
+
+?>

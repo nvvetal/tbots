@@ -1,33 +1,42 @@
 <?php
-class Tyrant_Deck
+namespace Bot\CoreBundle\Helper;
+use Bot\CoreBundle\Helper\CardsHelper;
+
+class DeckHelper
 {
-    const BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    private $BASE64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+    private $cardsHelper;
+
+    public function __construct(CardsHelper $CardsHelper)
+    {
+        $this->cardsHelper = $CardsHelper;
+    }
 
     /******* CARDS HASH **********/
-    private static function chd_f1($id)
+    private function chd_f1($id)
     {
-        $i = strpos(self::BASE64, $id);
+        $i = strpos($this->BASE64, $id);
         if ($id == '') return 0;
         return $i;
     }
 
 
-    private static function chd_f2($id)
+    private function chd_f2($id)
     {
-        return self::chd_f1(substr($id, 0, 1)) * 64 + self::chd_f1(substr($id, 1, 1));
+        return $this->chd_f1(substr($id, 0, 1)) * 64 + $this->chd_f1(substr($id, 1, 1));
     }
 
-    private static function chd_to64($x)
+    private function chd_to64($x)
     {
-        return substr(self::BASE64, $x, 1);
+        return substr($this->BASE64, $x, 1);
     }
 
-    private static function chd_idto64($id)
+    private function chd_idto64($id)
     {
-        return self::chd_to64(($id >> 6) & 63) . self::chd_to64($id & 63);
+        return $this->chd_to64(($id >> 6) & 63) . $this->chd_to64($id & 63);
     }
 
-    public static function getCardsFromDeckHash($nid, $ordered = true) {
+    public function getCardsFromDeckHash($nid, $ordered = true) {
         if ($nid == '') {
             return array();
         }
@@ -44,7 +53,7 @@ class Tyrant_Deck
         while (strlen($nid) > 0) {
             $ch = substr($nid, 0, 1);
             $nid = substr($nid, 1);
-            if ($ch != $_4000 && strpos(self::BASE64, $ch) === false) {
+            if ($ch != $_4000 && strpos($this->BASE64, $ch) === false) {
                 // unknown symbol
                 $p4000 = false;
                 $card = '';
@@ -59,10 +68,10 @@ class Tyrant_Deck
             $card .= $ch;
 
             if (strlen($card) == 2) {
-                $cid = self::chd_f2($card);
+                $cid = $this->chd_f2($card);
                 if ($cid > 4000) { // multiplier
                     $cnt = $cid - 4000;
-                    if (Tyrant_Cards::getCardById($cid) === false) {
+                    if ($this->cardsHelper->getCardById($cid) === false) {
                         continue; // unknown card
                     }
 
@@ -76,7 +85,7 @@ class Tyrant_Deck
                     }
                 } else {
                     if ($p4000) $cid += 4000;
-                    if (Tyrant_Cards::getCardById($cid) === false) {
+                    if ($this->cardsHelper->getCardById($cid) === false) {
                         continue; // unknown card
                     }
                     $cards[] = $cid;
@@ -108,7 +117,7 @@ class Tyrant_Deck
 
             $cid = $cards[$i];
 
-            $card = Tyrant_Cards::getCardById($cid);
+            $card = $this->cardsHelper->getCardById($cid);
             if ($card === false) {
                 continue; // unknown card
             }
@@ -128,7 +137,7 @@ class Tyrant_Deck
         return $res;
     }
 
-    public static function getDeckHashFromCards($deck, $ordered = true) {
+    public function getDeckHashFromCards($deck, $ordered = true) {
         if ($ordered) {
             usort($deck, function($a, $b) {
                 return $a - $b;
@@ -147,9 +156,9 @@ class Tyrant_Deck
 
             if ($cid > 4000) {
                 // card with id > 4000
-                $hash .= $_4000 . self::chd_idto64($cid - 4000);
+                $hash .= $_4000 . $this->chd_idto64($cid - 4000);
             } else {
-                $hash .= self::chd_idto64($cid);
+                $hash .= $this->chd_idto64($cid);
             }
             $cnt = 0;
             while ($i < count($deck) && $deck[$i] == $cid) {
@@ -159,10 +168,17 @@ class Tyrant_Deck
             }
             if ($cnt > 1) {
                 // adding multiplier
-                $hash .= self::chd_idto64(4000 + $cnt);
+                $hash .= $this->chd_idto64(4000 + $cnt);
             }
         }
 
         return $hash;
     }
+
+
+
+
 }
+
+
+?>

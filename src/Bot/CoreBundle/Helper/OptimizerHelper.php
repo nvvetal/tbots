@@ -1,19 +1,27 @@
 <?php
-class Tyrant_Optimizer
+namespace Bot\CoreBundle\Helper;
+
+use Bot\CoreBundle\Helper\CardsHelper;
+use Bot\CoreBundle\Helper\DeckHelper;
+use Bot\CoreBundle\Entity\Bot;
+
+class OptimizerHelper
 {
     const OPTIMIZE_RUN_CNT = 1000;
     const MIN_WIN_RATE = 90;
 
-    protected $_user;
+    private $cardsHelper;
+    private $deckHelper;
 
-    public function __construct(Tyrant_User $user)
+    public function __construct(CardsHelper $CardsHelper, DeckHelper $DeckHelper)
     {
-        $this->_user = $user;
+        $this->cardsHelper = $CardsHelper;
+        $this->deckHelper = $DeckHelper;
     }
 
-    public function optimize($enemyDeckHash)
+    public function optimize($enemyDeckHash, Bot $bot)
     {
-        $ret = $this->_call($enemyDeckHash);
+        $ret = $this->call($enemyDeckHash, $bot);
         if ($ret === false) {
             return false;
         }
@@ -39,7 +47,7 @@ class Tyrant_Optimizer
                 $cardName = trim($m[1]);
             }
 
-            $card = Tyrant_Cards::getCardByName($cardName);
+            $card = $this->cardsHelper->getCardByName($cardName);
 
 
             if ($card->isCommander()) {
@@ -58,19 +66,19 @@ class Tyrant_Optimizer
             'cardCommanderId'   => $commanderId,
             'cards'             => $cards,
             'fullDeck'          => $fullDeck,
-            'hash'              => Tyrant_Deck::getDeckHashFromCards($fullDeck, false),
+            'hash'              => $this->deckHelper->getDeckHashFromCards($fullDeck, false),
             'winRate'           => $winRate
         );
     }
 
-    protected function _call($enemyDeckHash)
+    protected function call($enemyDeckHash, Bot $bot)
     {
         $result = "";
         chdir(dirname(CMD_OPTYMAIZER));
         $command = CMD_OPTYMAIZER.' '
-            .escapeshellarg($this->_getDefaultDeckHash()).' '
+            .escapeshellarg($this->getDefaultDeckHash()).' '
             .escapeshellarg($enemyDeckHash).' '
-            .'-o='.escapeshellarg($this->_user->getOwnedCardsFileName()).' '
+            .'-o='.escapeshellarg($bot->getOwnedCardsFileName()).' '
             .'climb '.self::OPTIMIZE_RUN_CNT;
         if ($p = popen("($command)2>&1","r")) {
             while (!feof($p)) {
@@ -83,7 +91,7 @@ class Tyrant_Optimizer
         return false;
     }
 
-    protected function _getDefaultDeckHash()
+    protected function getDefaultDeckHash()
     {
         return 'PoAB';
     }

@@ -12,6 +12,10 @@ use Doctrine\ORM\Mapping as ORM;
  */
 class TileDeck
 {
+    const SCOUT_STATUS_NEW = 1;
+    const SCOUT_STATUS_PROCESS = 2;
+    const SCOUT_STATUS_FINISHED = 3;
+
     /**
      * @var integer
      *
@@ -38,6 +42,12 @@ class TileDeck
      * @ORM\Column(name="max_percent", type="integer")
      */
     protected $maxPercent; //use for def decks in future
+
+    /**
+     * @var integer
+     * @ORM\Column(name="scout_status", type="integer")
+     */
+    protected $scoutStatus;
 
     /**
      * @var integer
