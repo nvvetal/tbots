@@ -1,0 +1,5 @@
+bot_core:
+    resource: "@BotCoreBundle/Controller/"
+    type:     annotation
+    prefix:   /
+
