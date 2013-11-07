@@ -1,5 +1,6 @@
 <?php
 namespace Bot\CoreBundle\Classes;
+use Bot\CoreBundle\Classes\Logger;
 
 abstract class Client
 {
@@ -32,6 +33,8 @@ abstract class Client
 
     protected $activeDeckId;
     protected $defenseDeckId;
+
+    protected $logger;
 
     const FLAG_AUTOPILOT = 'autopilot';
     const CONQUEST_ATTACK_TILE_CD = 120;
@@ -150,11 +153,14 @@ abstract class Client
         return $this->stamina + floor((time() - $this->staminaTime) / 60) - $this->supplyOfStamina;
     }
 
+    public function setLogger($logger)
+    {
+        $this->logger = $logger;
+    }
+
     public function a2l($str)
     {
-        $f = fopen(dirname(__FILE__).'/'.$this->logName.'.'.date('Y-m-d').'.log', 'a+');
-        fwrite($f, "[".date("H:i:s")."] ".$str."\n");
-        fclose($f);
+        $this->logger->write($str, $this->logName);
     }
 
     public function getActiveWars($index = 0)

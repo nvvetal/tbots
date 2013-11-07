@@ -1,6 +1,10 @@
 parameters:
 
 services:
+  logger:
+    class: Bot\CoreBundle\Classes\Logger
+    arguments: ["%kernel.root_dir%/logs"]
+
   helper.xml:
     class: Bot\CoreBundle\Helper\XMLHelper
     arguments: [@service_container]

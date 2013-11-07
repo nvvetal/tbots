@@ -21,6 +21,7 @@ class BotHelper
     public function getBotClient(Bot $bot)
     {
         $user = new User($bot->getUserId(), $bot->getFlashCode());
+        $user->setLogger($this->container->get('logger'));
         $user->init();
 
         // write user cards file.
@@ -34,6 +35,7 @@ class BotHelper
             $card = $cardsHelper->getCardById($cardId);
             if ($card === false) {
                 //echo "cant load card: ".$cardId."\n";
+                $this->container->get('logger')->write('[error cant load card: '.$cardId.'][botId '.$bot->getUserId().']', 'error_bot_helper_get_bot_client');
             }
             $lvl = '';
             if ($card->isUpdatedCard()) {
