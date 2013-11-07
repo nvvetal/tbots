@@ -78,8 +78,11 @@ class OptimizerHelper
         $botHelper = $this->container->get('helper.bot');
         $optimizerPath = $this->container->getParameter('optimizer_path');
         $result = "";
-
-        $command = $optimizerPath.' '
+        $optimizerCommand = $optimizerPath.'tyrant_optimize';
+        if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
+            $optimizerCommand .= '.exe';
+        }
+        $command = $optimizerCommand.' '
             .escapeshellarg($this->getDefaultDeckHash()).' '
             .escapeshellarg($enemyDeckHash).' '
             .'-o='.escapeshellarg($botHelper->getOwnedCardsFileName($bot)).' '

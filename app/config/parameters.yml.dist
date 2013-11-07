@@ -14,3 +14,6 @@ parameters:
     locale:            en
     secret:            ThisTokenIsNotSoSecretChangeIt
     optimizer_path: ~
+    bot_data: ~
+    test_bot_id: ~
+    test_bot_hash: ~

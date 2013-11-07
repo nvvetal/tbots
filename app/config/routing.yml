@@ -1,5 +1,4 @@
-bot_core:
-    resource: "@BotCoreBundle/Controller/"
-    type:     annotation
+main:
+    resource: "@BotCoreBundle/Resources/config/routing.yml"
     prefix:   /
 

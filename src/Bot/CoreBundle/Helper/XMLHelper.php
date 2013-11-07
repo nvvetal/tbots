@@ -8,12 +8,11 @@ class XMLHelper
     public function __construct($container)
     {
         $this->container = $container;
-        $this->setCards();
     }
 
     public function getCards()
     {
-        $fileName = $this->container->getParameter('optimizer_path').'/cards.xml';
+        $fileName = $this->container->getParameter('optimizer_path').'cards.xml';
         $xml = (array) simplexml_load_file($fileName);
         if (!$xml) {
             return NULL;
@@ -21,10 +20,6 @@ class XMLHelper
         return $xml;
     }
 
-    private function setCards()
-    {
-        //TODO: fill somehow with cards
-    }
 }
 
 

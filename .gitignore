@@ -10,3 +10,8 @@ build/
 !app/cache/.gitkeep
 !app/logs/.gitkeep
 /bin/
+/app/tyrant_optimize/*
+!app/tyrant_optimize/.gitkeep
+/app/data/*
+!app/data/.gitkeep
+
