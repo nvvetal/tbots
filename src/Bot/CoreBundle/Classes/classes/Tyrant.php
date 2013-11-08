@@ -6,6 +6,7 @@ class Tyrant
     protected $_systemId;
     protected $_tileInfo;
     protected $_scoutInfo = array();
+    protected $_effect = 0;
 
     public function __construct($tailSystemId)
     {
@@ -49,6 +50,34 @@ class Tyrant
         return false;
     }
 
+    public function updateSlotDeck($systemSlotId, $data)
+    {
+        if (empty($this->_scoutInfo[$systemSlotId])) {
+            $this->_scoutInfo[$systemSlotId] = $data;
+            return true;
+        }
+
+        $current = $this->_scoutInfo[$systemSlotId];
+
+        if ($current['enemyDeckHash'] === $data['enemyDeckHash']) {
+            return true;
+        }
+
+
+        if ($data['enemyCommanderId'] != $current['enemyCommanderId']) {
+            $this->_scoutInfo[$systemSlotId] = $data;
+            return true;
+        }
+
+        if (count($data['enemyDeck']) > count($current['enemyDeck'])) {
+            $this->_scoutInfo[$systemSlotId] = $data;
+            return true;
+        }
+        // TODO: combine cards ?
+
+        return false;
+    }
+
     public function setScout($userId)
     {
         $this->_scoutId = $userId;
@@ -59,11 +88,15 @@ class Tyrant
         $scout = $this->getScout();
 
         if (!$this->_tileInfo) {
+            $ret = $scout->getConquestTileInfo($this->_systemId);
             if (empty($ret['result'])) {
                 return false;
             }
-            $ret = $scout->getConquestTileInfo($this->_systemId);
             $this->_tileInfo = $ret['system'];
+        }
+
+        if (!empty($ret['system']['effect'])) {
+            $this->_effect = $ret['system']['effect'];
         }
 
         $slots = array();
@@ -96,9 +129,11 @@ class Tyrant
         }
 
         $ret = $scout->attackConquestTile($this->_systemId, $systemSlotId);
-        $this->updateScoutTileSlot($systemSlotId, $ret);
+        if ($this->updateScoutTileSlot($systemSlotId, $ret)) {
+            return $this->_scoutInfo[$systemSlotId];
+        }
 
-        return true;
+        return false;
     }
 
     public function updateScoutTileSlot($systemSlotId, $data)
@@ -106,6 +141,8 @@ class Tyrant
         $dir = $this->getBattleLogPath();
         file_put_contents($dir.'/'.$systemSlotId.'.deck', serialize($data));
         $this->_scoutInfo[$systemSlotId] = $data;
+
+        return true;
     }
 
     public function setRandomScout()
@@ -134,41 +171,59 @@ class Tyrant
         $slots = $this->getTileInfo();
         foreach ($slots as $slot) {
             while ($slot['health'] > 0) {
-                // TODO update $slot
+                Tyrant::l('slot: %d; health: %d', array($slot['systemSlotId'], $slot['health']));
+
                 $deck = $this->getSlotDeck($slot['systemSlotId']);
                 if ($deck === false) {
+                    Tyrant::l('scout slot: %d', array($slot['systemSlotId']));
                     $deck = $this->scoutTileSlot($slot['systemSlotId']);
                 }
+                Tyrant::l('Enemy Deck is: %s', array($deck['enemyDeckHash']));
 
+
+                $usrSkip = 0;
                 /** @var Tyrant_User $user */
                 foreach ($this->users as $user) {
                     if ($slot['health'] <= 0) {
                         break;
                     }
-                    $winRate = $user->getWinRateForDeckHash($deck['enemyDeckHash']);
-                    if ($winRate < Tyrant_Optimizer::MIN_WIN_RATE) {
+                    $info = $user->getOptimizationInfo($deck['enemyDeckHash'], $this->_effect);
+                    if ($info === false) {
+                        $usrSkip++;
                         continue;
                     }
 
-                    // TODO: check time;
+                    if (!$user->prepareAndSetDeckCards(false, $info['cardCommanderId'], $info['cards'])) {
+                        continue;
+                    }
+
+                    $can = $user->canAttackTile($this->_systemId, $slot['systemSlotId']);
+                    if (!$can['ok']) {
+                        Tyrant::l('cant attack '.(!empty($can['wait']) ? 'need to wait: '.$can['wait'] : ''));
+                        continue;
+                    }
 
                     $ret = $user->attackConquestTile($this->_systemId, $slot['systemSlotId']);
-                    // TODO: analize $ret;
+                    $this->updateSlotDeck($slot['systemSlotId'], $ret);
+
+                    Tyrant::l(
+                        '[%s] %s health: %s',
+                        array($user->getId(), $ret['winner'] ? 'WIN' : 'DEFEAT', $ret['slot']['health'])
+                    );
+
+                    $slot['health'] = $ret['slot']['health'];
+                    $slot['commanderId'] = $ret['slot']['commander_id'];
+
+                    $this->_tileInfo = $ret['system'];
                 }
 
-
-                /*
-
-                        'enemyCommanderId'  => $enemyCommanderId,
-                        'enemyDeck'         => $enemyDeck,
-                        'enemyDeckHash'     => Tyrant_Deck::getDeckHashFromCards($enemyFullDeck, false),
-                        'winner'            => !empty($t['winner']),
-                */
-
-                //TODO: check deck and update scoutTileInfo
+                if (count($this->users) === $usrSkip) {
+                    // no one can beat this deck!
+                    Tyrant::l('no one can beat this deck');
+                    break;
+                }
             }
         }
-
     }
 
     protected function getBattleLogPath()
@@ -179,5 +234,17 @@ class Tyrant
         }
 
         return $dir;
+    }
+
+    public static function l($src, $params = array())
+    {
+        if (!empty($params)) {
+            array_unshift($params, $src);
+            $src = call_user_func_array('sprintf', $params);
+        }
+
+        $mt = microtime(true);
+        $mls = $mt - floor($mt);
+        printf("%s:%.3f| %s\n", date('Y-m-d H:i:s'), $mls, $src);
     }
 }

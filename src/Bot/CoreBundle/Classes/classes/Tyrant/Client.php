@@ -225,14 +225,14 @@ abstract class Tyrant_Client
         return $this->request('setActiveDeck', array('deck_id' => $deckId));
     }
 
-    // TODO
     public function setCardsForDesk($deckId, $hash)
     {
         $ret = $this->clearDeck($deckId);
         if (!$ret) return false;
-        $cards = $this->getCardsFromDeckHash($hash);
+        $cards = Tyrant_Deck::getCardsFromDeckHash($hash);
         foreach ($cards as $cardId) {
-            $commander = $this->isCardCommander($cardId);
+            $card = Tyrant_Cards::getCardById($cardId);
+            $commander = $card->isCommander();
             $ca = $this->cardAvailable($cardId);
             if ($ca == -2) continue; // card wasnt found
             if ($ca == -1) { // card found, but used
@@ -243,7 +243,8 @@ abstract class Tyrant_Client
                         if ($commander) {
                             foreach ($this->myCards as $myCardId => $u) {
                                 if ($myCardId == $cardId) continue;
-                                if (!$this->isCardCommander($myCardId)) continue;
+                                $myCard = Tyrant_Cards::getCardById($myCardId);
+                                if (!$myCard->isCommander()) continue;
                                 if ($u['num_used'] >= $u['num_owned']) continue;
                                 $ret = $this->setCardToDeck($caDeckId, $myCardId);
                                 break;
@@ -291,25 +292,52 @@ abstract class Tyrant_Client
                 }
             }
         }
+
         return $decks;
+    }
+
+    public function getCurrentDeck()
+    {
+        foreach ($this->myDescks as $deck) {
+            if ($deck['deck_id'] == $this->activeDeckId) {
+                return $deck;
+            }
+        }
+
+        return false;
     }
 
     public function setDeckCards($deckId, $commanderId, $cards)
     {
+        if ($deckId === false) {
+            $deckId = $this->activeDeckId;
+        }
+
+        $prepCards = array();
+        foreach ($cards as $cardId) {
+            if (empty($prepCards[$cardId])) {
+                $prepCards[$cardId] = 0;
+            }
+            $prepCards[$cardId]++;
+        }
+
         $result = $this->request(
             'setDeckCards',
             array(
                 'commander_id'  => $commanderId,
-                'cards'         => json_encode($cards),
+                'cards'         => json_encode($prepCards),
                 'deck_id'       => $deckId
             )
         );
-        if (empty($result['result'])) {
+        if (!empty($result['error_message'])) {
+            Tyrant::l('cant set deck '.$this->userId.' error: '.$result['error_message']);
             return false;
         }
-        $this->myCards = $result['user_cards'];
+        //$this->myCards = $result['user_cards'] + $this->myCards;
         $this->updateMyCards($result['deck_cards']);
         $this->updateMyDeck($result['deck_data']);
+
+        return true;
     }
 
     public function setCardToDeck($deckId, $cardId)
@@ -449,13 +477,27 @@ abstract class Tyrant_Client
         $enemyFullDeck = $enemyDeck;
         array_unshift($enemyFullDeck, $enemyCommanderId);
 
-        $this->tileAttackCD[$systemId.':'.$slotId] = time() + self::CONQUEST_ATTACK_TILE_CD;
+        $system = $t['system'];
+        $slot = false;
+        foreach ($system['slots'] as $_s) {
+            if ($_s['system_slot_id'] == $slotId) {
+                $slot = $_s;
+                break;
+            }
+        }
+
+        if (!empty($slot['protection_end_time'])) {
+            $this->tileAttackCD[$systemId.':'.$slotId] = $slot['protection_end_time'];
+        }
 
         return array(
             'enemyCommanderId'  => $enemyCommanderId,
             'enemyDeck'         => $enemyDeck,
             'enemyDeckHash'     => Tyrant_Deck::getDeckHashFromCards($enemyFullDeck, false),
+            'enemyFullDeck'     => $enemyFullDeck,
             'winner'            => !empty($t['winner']),
+            'slot'              => $slot,
+            'system'            => $system,
         );
     }
 
@@ -509,4 +551,17 @@ version	2.17.07
 {"defender_goes_first":true,"is_defender":true,"attack_commander":"1015","defend_commander":"1045","defend_deck":{"101":"4268","102":"3061","103":"997","104":"4122","105":"4169"},"enemy_id":"100000602476327","enemy_size":9,"turn":{"1":{"draws":[1,2,3],"plays":[[1,[]]]},"2":{"draws":[101,102,103],"plays":[[101,[]]]},"3":{"draws":[4],"plays":[[2,[]]]},"4":{"draws":[104],"plays":[[102,[]]],"actions":[{"card_uid":102,"skill_id":"strike","targets":[2],"value":2,"status":[]}]},"5":{"draws":[5],"plays":[[3,[]]]},"6":{"draws":[105],"plays":[[103,[]]],"tokens":[{"uid":151,"card_id":"68","is_attacker":0}],"actions":[{"card_uid":103,"skill_id":"summon","targets":[151],"value":1,"status":[]},{"card_uid":-2,"skill_id":"weaken","targets":[2,3],"value":1,"status":[[2,"attack_boost",-1],[3,"attack_boost",-1]]},{"card_uid":101,"skill_id":"rally","targets":[101,151],"value":2,"status":[[101,"attack_boost",2],[151,"attack_boost",2]]},{"card_uid":101,"skill_id":0,"targets":[2],"value":4,"block":[],"status":[]},{"card_uid":151,"skill_id":0,"targets":-1,"value":3}],"end":[{"card_uid":101,"status_flag":"attack_boost","value":0},{"card_uid":151,"status_flag":"attack_boost","value":0}]},"7":{"draws":[6],"plays":[[4,[]]],"actions":[{"card_uid":-1,"skill_id":"rally","targets":[3],"value":1,"status":[[3,"attack_boost",0]]},{"card_uid":3,"skill_id":"rally","targets":[3],"value":1,"status":[[3,"attack_boost",1]]},{"card_uid":3,"skill_id":"fear","targets":101,"value":2},{"card_uid":3,"skill_id":0,"targets":-2,"value":2}],"end":[{"card_uid":3,"status_flag":"attack_boost","value":0}]},"8":{"plays":[[104,[]]],"actions":[{"card_uid":-2,"skill_id":"weaken","targets":[3,4],"value":1,"status":[[3,"attack_boost",-1],[4,"attack_boost",-1]]},{"card_uid":101,"skill_id":"rally","targets":[101,103,151],"value":2,"status":[[101,"attack_boost",2],[103,"attack_boost",2],[151,"attack_boost",2]]},{"card_uid":101,"skill_id":0,"targets":[3],"value":4,"block":[],"status":[]},{"card_uid":101,"skill_id":"siphon","targets":-2,"value":2,"target2":3},{"card_uid":103,"skill_id":0,"targets":[4],"value":4,"block":[],"status":[]},{"card_uid":151,"skill_id":0,"targets":-1,"value":3}],"end":[{"card_uid":101,"status_flag":"attack_boost","value":0},{"card_uid":103,"status_flag":"attack_boost","value":0},{"card_uid":151,"status_flag":"attack_boost","value":0}]},"9":{"draws":[7],"plays":[[5,[]]],"actions":[{"card_uid":5,"skill_id":"weaken","targets":[101,103,151],"value":3,"status":[[101,"attack_boost",-3],[103,"attack_boost",-3],[151,"attack_boost",-3]]},{"card_uid":-1,"skill_id":"rally","targets":[4],"value":1,"status":[[4,"attack_boost",0]]},{"card_uid":3,"skill_id":"rally","targets":[3],"value":1,"status":[[3,"attack_boost",0]]},{"card_uid":3,"skill_id":"fear","targets":101,"value":1},{"card_uid":3,"skill_id":0,"targets":-2,"value":1},{"card_uid":4,"skill_id":"rally","targets":[4],"value":1,"status":[[4,"attack_boost",1]]},{"card_uid":4,"skill_id":"fear","targets":103,"value":2},{"card_uid":4,"skill_id":0,"targets":-2,"value":2}],"end":[{"card_uid":3,"status_flag":"attack_boost","value":0},{"card_uid":4,"status_flag":"attack_boost","value":0}]},"10":{"plays":[[105,[]]],"actions":[{"card_uid":-2,"skill_id":"weaken","targets":[3,4],"value":1,"status":[[3,"attack_boost",-1],[4,"attack_boost",-1]]},{"card_uid":101,"skill_id":"rally","targets":[101,103,151,104],"value":2,"status":[[101,"attack_boost",-1],[103,"attack_boost",-1],[151,"attack_boost",-1],[104,"attack_boost",2]]},{"card_uid":101,"skill_id":0,"targets":[3],"value":1,"block":[],"status":[]},{"card_uid":101,"skill_id":"siphon","targets":-2,"value":1,"target2":3},{"card_uid":103,"skill_id":0,"targets":[4],"value":1,"block":[],"status":[]},{"card_uid":104,"skill_id":"rally","targets":[104],"value":3,"status":[[104,"attack_boost",5]]},{"card_uid":104,"skill_id":0,"targets":-1,"value":5}],"end":[{"card_uid":101,"status_flag":"attack_boost","value":0},{"card_uid":103,"status_flag":"attack_boost","value":0},{"card_uid":151,"status_flag":"attack_boost","value":0},{"card_uid":104,"status_flag":"attack_boost","value":0}]},"11":{"draws":[8],"plays":[[6,[]]]},"12":{"actions":[{"card_uid":101,"skill_id":"rally","targets":[101,103,151,104],"value":2,"status":[[101,"attack_boost",2],[103,"attack_boost",2],[151,"attack_boost",2],[104,"attack_boost",2]]},{"card_uid":104,"skill_id":"tribute","targets":101,"value":0},{"card_uid":104,"skill_id":"rally","targets":101,"value":2,"status":[[101,"attack_boost",4]]},{"card_uid":101,"skill_id":0,"targets":[6],"value":6,"block":[],"status":[]},{"card_uid":101,"skill_id":"siphon","targets":-2,"value":2,"target2":6},{"card_uid":103,"skill_id":0,"targets":-1,"value":4}],"end":[{"card_uid":101,"status_flag":"attack_boost","value":0},{"card_uid":103,"status_flag":"attack_boost","value":0},{"card_uid":151,"status_flag":"attack_boost","value":0},{"card_uid":104,"status_flag":"attack_boost","value":0}]}},"card_map":{"1":"3052","101":"4268","2":"951","102":"3061","3":"4246","103":"997","4":"4246","104":"4122","5":"3006","105":"4169","6":"951"},"end_time":1383653981,"winner":1,"system_id":"429","system_slot_id":"15","achievements":[],"effects":{"7":{}},"result":true,"time":1383653981,"version":"2.17.07","money":94176,"name_changes":"0","cash":"32","reward_points":"845","tokens_bought":"410","xp":1353880,"energy":130,"max_energy":775,"extra_decks":3,"stamina":249,"max_stamina":300,"energy_cost":10,"loyalty_change":1,"loyalty":8684,"xp_reward":10,"money_reward":66,"item":[],"system":{"system_id":"429","x":"5","y":"-7","faction_id":"9491001","terrain":"3","asset":"3","rating":2,"level_cap":"0","max_decks":30,"color":"39423","faction_name":"Alpha Squad","protection_end_time":"1383425837","attacking_faction_id":"9902001","attacking_faction_name":"KOMMUNISTS","attack_end_time":"1383674902","attack_start_time":1383653302,"effect":"7","max_health":120,"slots":{"1":{"system_id":"429","system_slot_id":"1","health":"120","defeated":"0","commander_id":"1248","protection_end_time":null},"2":{"system_id":"429","system_slot_id":"2","health":"120","defeated":"0","commander_id":"1202","protection_end_time":null},"4":{"system_id":"429","system_slot_id":"4","health":"120","defeated":"0","commander_id":"1291","protection_end_time":null},"5":{"system_id":"429","system_slot_id":"5","health":"120","defeated":"0","commander_id":"1141","protection_end_time":null},"6":{"system_id":"429","system_slot_id":"6","health":"120","defeated":"0","commander_id":"1203","protection_end_time":null},"7":{"system_id":"429","system_slot_id":"7","health":"120","defeated":"0","commander_id":"1036","protection_end_time":null},"8":{"system_id":"429","system_slot_id":"8","health":"120","defeated":"0","commander_id":"1268","protection_end_time":null},"9":{"system_id":"429","system_slot_id":"9","health":"120","defeated":"0","commander_id":"1268","protection_end_time":null},"10":{"system_id":"429","system_slot_id":"10","health":"120","defeated":"0","commander_id":"1246","protection_end_time":null},"11":{"system_id":"429","system_slot_id":"11","health":"120","defeated":"0","commander_id":"1240","protection_end_time":null},"12":{"system_id":"429","system_slot_id":"12","health":"120","defeated":"0","commander_id":"1123","protection_end_time":null},"13":{"system_id":"429","system_slot_id":"13","health":"120","defeated":"0","commander_id":"1268","protection_end_time":null},"14":{"system_id":"429","system_slot_id":"14","health":"120","defeated":"0","commander_id":"1246","protection_end_time":null},"15":{"system_id":"429","system_slot_id":"15","health":"105","defeated":"0","commander_id":"1015","protection_end_time":1383654131},"16":{"system_id":"429","system_slot_id":"16","health":"120","defeated":"0","commander_id":"1247","protection_end_time":null},"17":{"system_id":"429","system_slot_id":"17","health":"120","defeated":"0","commander_id":"1141","protection_end_time":null},"19":{"system_id":"429","system_slot_id":"19","health":"120","defeated":"0","commander_id":"1004","protection_end_time":null},"20":{"system_id":"429","system_slot_id":"20","health":"120","defeated":"0","commander_id":"1247","protection_end_time":null},"24":{"system_id":"429","system_slot_id":"24","health":"120","defeated":"0","commander_id":"1268","protection_end_time":null},"26":{"system_id":"429","system_slot_id":"26","health":"120","defeated":"0","commander_id":"1267","protection_end_time":null},"27":{"system_id":"429","system_slot_id":"27","health":"120","defeated":"0","commander_id":"1013","protection_end_time":null},"28":{"system_id":"429","system_slot_id":"28","health":"120","defeated":"0","commander_id":"1268","protection_end_time":null},"29":{"system_id":"429","system_slot_id":"29","health":"120","defeated":"0","commander_id":"1240","protection_end_time":null},"30":{"system_id":"429","system_slot_id":"30","health":"120","defeated":"0","commander_id":"1238","protection_end_time":null}}}}
 
  *
+ */
+
+/*
+http://fb.tyrantonline.com/api.php?user_id=100000568978827&message=declareConquestWar
+tileX:16
+tileY:15
+flashcode:3900c4fbfd246c508d94b681b009e835
+time:1537658
+version:2.17.07
+hash:65fe1895b70c0fba077c076802e60a3f
+ccache:
+client_code:409
+rc:2
  */

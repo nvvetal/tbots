@@ -11,9 +11,9 @@ class Tyrant_Optimizer
         $this->_user = $user;
     }
 
-    public function optimize($enemyDeckHash)
+    public function optimize($enemyDeckHash, $effect)
     {
-        $ret = $this->_call($enemyDeckHash);
+        $ret = $this->_call($enemyDeckHash, $effect);
         if ($ret === false) {
             return false;
         }
@@ -23,6 +23,12 @@ class Tyrant_Optimizer
         }
 
         $winRate = $m[1];
+
+        Tyrant::l(
+            '[%d] Try to optimize deck. WinRate: %s, cards: %s',
+            array($this->_user->getId(), $winRate, $m[2])
+        );
+
         if ($winRate < self::MIN_WIN_RATE) {
             return false;
         }
@@ -63,13 +69,14 @@ class Tyrant_Optimizer
         );
     }
 
-    protected function _call($enemyDeckHash)
+    protected function _call($enemyDeckHash, $effect)
     {
         $result = "";
         chdir(dirname(CMD_OPTYMAIZER));
         $command = CMD_OPTYMAIZER.' '
             .escapeshellarg($this->_getDefaultDeckHash()).' '
             .escapeshellarg($enemyDeckHash).' '
+            .($effect ? '-e '.$effect : '').' '
             .'-o='.escapeshellarg($this->_user->getOwnedCardsFileName()).' '
             .'climb '.self::OPTIMIZE_RUN_CNT;
         if ($p = popen("($command)2>&1","r")) {
