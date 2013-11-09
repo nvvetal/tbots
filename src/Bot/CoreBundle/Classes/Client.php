@@ -34,7 +34,7 @@ abstract class Client
     protected $activeDeckId;
     protected $defenseDeckId;
 
-    protected $logger;
+    protected $container;
 
     const FLAG_AUTOPILOT = 'autopilot';
     const CONQUEST_ATTACK_TILE_CD = 120;
@@ -153,14 +153,14 @@ abstract class Client
         return $this->stamina + floor((time() - $this->staminaTime) / 60) - $this->supplyOfStamina;
     }
 
-    public function setLogger($logger)
+    public function setContainer($logger)
     {
-        $this->logger = $logger;
+        $this->container = $logger;
     }
 
     public function a2l($str)
     {
-        $this->logger->write($str, $this->logName);
+        $this->container->write($str, $this->logName);
     }
 
     public function getActiveWars($index = 0)
@@ -240,7 +240,8 @@ abstract class Client
         if (!$ret) return false;
         $cards = $this->getCardsFromDeckHash($hash);
         foreach ($cards as $cardId) {
-            $commander = $this->isCardCommander($cardId);
+            $card = $this->container->get('helper.cards')->getCardById($cardId);
+            $commander = $card->isCommander();
             $ca = $this->cardAvailable($cardId);
             if ($ca == -2) continue; // card wasnt found
             if ($ca == -1) { // card found, but used
@@ -251,7 +252,8 @@ abstract class Client
                         if ($commander) {
                             foreach ($this->myCards as $myCardId => $u) {
                                 if ($myCardId == $cardId) continue;
-                                if (!$this->isCardCommander($myCardId)) continue;
+                                $myCard = $this->container->get('helper.cards')->getCardById($myCardId);
+                                if (!$myCard->isCommander()) continue;
                                 if ($u['num_used'] >= $u['num_owned']) continue;
                                 $ret = $this->setCardToDeck($caDeckId, $myCardId);
                                 break;
@@ -302,22 +304,48 @@ abstract class Client
         return $decks;
     }
 
+
+    public function getCurrentDeck()
+    {
+        foreach ($this->myDescks as $deck) {
+            if ($deck['deck_id'] == $this->activeDeckId) {
+                return $deck;
+            }
+       }
+
+       return false;
+    }
+
     public function setDeckCards($deckId, $commanderId, $cards)
     {
+
+        if ($deckId === false) {
+                   $deckId = $this->activeDeckId;
+        }
+
+         $prepCards = array();
+         foreach ($cards as $cardId) {
+         if (empty($prepCards[$cardId])) {
+                 $prepCards[$cardId] = 0;
+             }
+             $prepCards[$cardId]++;
+        }
         $result = $this->request(
             'setDeckCards',
             array(
                 'commander_id'  => $commanderId,
-                'cards'         => json_encode($cards),
+                'cards'         => json_encode($prepCards),
                 'deck_id'       => $deckId
             )
         );
         if (empty($result['result'])) {
             return false;
         }
-        $this->myCards = $result['user_cards'];
+        //$this->myCards = $result['user_cards'];
         $this->updateMyCards($result['deck_cards']);
         $this->updateMyDeck($result['deck_data']);
+
+        return true;
     }
 
     public function setCardToDeck($deckId, $cardId)
@@ -426,7 +454,6 @@ abstract class Client
                 'slot_id'   => $slotId,
             )
         );
-
         $this->stamina -= 20;
 
         $isDefender = !empty($t['is_defender']);
@@ -462,7 +489,7 @@ abstract class Client
         return array(
             'enemyCommanderId'  => $enemyCommanderId,
             'enemyDeck'         => $enemyDeck,
-            'enemyDeckHash'     => Tyrant_Deck::getDeckHashFromCards($enemyFullDeck, false),
+            'enemyDeckHash'     => $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false),
             'winner'            => !empty($t['winner']),
         );
     }
@@ -470,18 +497,18 @@ abstract class Client
     public function canAttackTile($systemId, $systemSlotId)
     {
         if ($this->getStamina() < 20) {
-            return array('ok' => false);
+            return array('ok' => false, 'error' => 'small stamina');
         }
 
         if (empty($this->tileAttackCD[$systemId.':'.$systemSlotId])) {
-            return array('ok' => true);
+            return array('ok' => true, 'no tile attack CD');
         }
 
         if (time() > $this->tileAttackCD[$systemId.':'.$systemSlotId]) {
             return array('ok' => true);
         }
 
-        return array('ok' => false, 'wait' => $this->tileAttackCD[$systemId.':'.$systemSlotId] - time());
+        return array('ok' => false, 'error' => 'need to wait', 'wait' => $this->tileAttackCD[$systemId.':'.$systemSlotId] - time());
     }
 
     public function getMyCards()

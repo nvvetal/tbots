@@ -23,9 +23,22 @@ class Tile
 
     /**
      * @var string
-     * @ORM\Column(name="coordinate", type="string")
+     * @ORM\Column(name="system_id", type="string")
      */
-    protected $coordinate;
+    protected $systemId;
+
+    /**
+     * @var integer
+     * @ORM\Column(name="x", type="integer")
+     */
+    protected $x;
+
+
+    /**
+     * @var integer
+     * @ORM\Column(name="y", type="integer")
+     */
+    protected $y;
 
     /**
      * @var integer
@@ -77,29 +90,6 @@ class Tile
     public function getId()
     {
         return $this->id;
-    }
-
-    /**
-     * Set coordinate
-     *
-     * @param string $coordinate
-     * @return Tile
-     */
-    public function setCoordinate($coordinate)
-    {
-        $this->coordinate = $coordinate;
-    
-        return $this;
-    }
-
-    /**
-     * Get coordinate
-     *
-     * @return string 
-     */
-    public function getCoordinate()
-    {
-        return $this->coordinate;
     }
 
     /**
@@ -262,4 +252,53 @@ class Tile
     {
         return $this->createdTime;
     }
+
+    /**
+     * @param string $systemId
+     */
+    public function setSystemId($systemId)
+    {
+        $this->systemId = $systemId;
+    }
+
+    /**
+     * @return string
+     */
+    public function getSystemId()
+    {
+        return $this->systemId;
+    }
+
+    /**
+     * @param int $x
+     */
+    public function setX($x)
+    {
+        $this->x = $x;
+    }
+
+    /**
+     * @return int
+     */
+    public function getX()
+    {
+        return $this->x;
+    }
+
+    /**
+     * @param int $y
+     */
+    public function setY($y)
+    {
+        $this->y = $y;
+    }
+
+    /**
+     * @return int
+     */
+    public function getY()
+    {
+        return $this->y;
+    }
+
 }

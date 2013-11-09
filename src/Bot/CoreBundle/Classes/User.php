@@ -12,25 +12,4 @@ class User extends Client
         $this->userId = $userId;
         $this->flashCode = $flashCode;
     }
-
-    public function getWinRateForDeckHash($hash)
-    {
-        if (!empty($this->_optimizedDecks[$hash])) {
-            return $this->_optimizedDecks;
-        }
-
-        $to = $this->getTyrantOptimizer();
-        $this->_optimizedDecks[$hash] = $to->optimize($hash);
-
-        return $this->_optimizedDecks[$hash];
-    }
-
-    public function getTyrantOptimizer()
-    {
-        if (!$this->_optimizer) {
-            $this->_optimizer = new Tyrant_Optimizer($this);
-        }
-
-        return $this->_optimizer;
-    }
 }

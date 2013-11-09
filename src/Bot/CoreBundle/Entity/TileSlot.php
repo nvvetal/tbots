@@ -5,9 +5,9 @@ namespace Bot\CoreBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * TileDeck
+ * TileSlot
  *
- * @ORM\Table(name="tile_deck")
+ * @ORM\Table(name="tile_slot")
  * @ORM\Entity
  */
 class TileDeck
@@ -30,6 +30,13 @@ class TileDeck
      * @ORM\JoinColumn(name="tile_id", referencedColumnName="id", onDelete="CASCADE")
      */
     protected $tile;
+
+    /**
+     * @var integer
+     * @ORM\Column(name="cards_count", type="integer")
+     */
+    protected $cardsCount;
+
 
     /**
      * @var string
@@ -156,4 +163,37 @@ class TileDeck
     {
         return $this->tile;
     }
+
+    /**
+     * @param int $cardsCount
+     */
+    public function setCardsCount($cardsCount)
+    {
+        $this->cardsCount = $cardsCount;
+    }
+
+    /**
+     * @return int
+     */
+    public function getCardsCount()
+    {
+        return $this->cardsCount;
+    }
+
+    /**
+     * @param int $scoutStatus
+     */
+    public function setScoutStatus($scoutStatus)
+    {
+        $this->scoutStatus = $scoutStatus;
+    }
+
+    /**
+     * @return int
+     */
+    public function getScoutStatus()
+    {
+        return $this->scoutStatus;
+    }
+
 }

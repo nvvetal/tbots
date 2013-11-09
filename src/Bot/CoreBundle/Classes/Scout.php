@@ -28,9 +28,6 @@ class Scout
     public function getTileInfo()
     {
         if (!$this->tileInfo) {
-            if (empty($ret['result'])) {
-                return false;
-            }
             $ret = $this->bot->getConquestTileInfo($this->tailId);
             $this->tileInfo = $ret['system'];
         }
@@ -54,6 +51,9 @@ class Scout
         if (!empty($this->info[$slotId])) {
             return $this->info[$slotId];
         }
+
+        $canAttack = $this->bot->canAttackTile($this->tailId, $slotId);
+        if(!$canAttack['ok']) return false;
         $ret = $this->bot->attackConquestTile($this->tailId, $slotId);
         $this->updateScoutTileSlot($slotId, $ret);
         return $this->getSlotDeck($slotId);
@@ -61,23 +61,7 @@ class Scout
 
     public function updateScoutTileSlot($slotId, $data)
     {
-        $this->_scoutInfo[$slotId] = $data;
+        $this->info[$slotId] = $data;
     }
 
-    public function attackTile()
-    {
-        $slots = $this->getTileInfo();
-        foreach ($slots as $slot) {
-            while ($slot['health'] > 0) {
-                // TODO update $slot
-                $deck = $this->getSlotDeck($slot['systemSlotId']);
-                if ($deck === false) {
-                    $deck = $this->scoutTileSlot($slot['systemSlotId']);
-                }
-                var_dump($deck);
-                //TODO:
-            }
-        }
-
-    }
 }

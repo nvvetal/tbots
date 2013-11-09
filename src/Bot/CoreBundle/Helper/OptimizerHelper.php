@@ -21,9 +21,9 @@ class OptimizerHelper
         $this->container = $container;
     }
 
-    public function optimize($enemyDeckHash, Bot $bot)
+    public function optimize($enemyDeckHash, $effect, Bot $bot)
     {
-        $ret = $this->call($enemyDeckHash, $bot);
+        $ret = $this->call($enemyDeckHash, $effect, $bot);
         if ($ret === false) {
             return false;
         }
@@ -73,7 +73,7 @@ class OptimizerHelper
         );
     }
 
-    protected function call($enemyDeckHash, Bot $bot)
+    protected function call($enemyDeckHash, $effect, Bot $bot)
     {
         $botHelper = $this->container->get('helper.bot');
         $optimizerPath = $this->container->getParameter('optimizer_path');
@@ -85,6 +85,7 @@ class OptimizerHelper
         $command = $optimizerCommand.' '
             .escapeshellarg($this->getDefaultDeckHash()).' '
             .escapeshellarg($enemyDeckHash).' '
+            .($effect ? '-e '.$effect : '').' '
             .'-o='.escapeshellarg($botHelper->getOwnedCardsFileName($bot)).' '
             .'climb '.self::OPTIMIZE_RUN_CNT;
         if ($p = popen("($command)2>&1","r")) {
