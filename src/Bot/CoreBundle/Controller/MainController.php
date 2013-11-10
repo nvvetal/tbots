@@ -43,6 +43,10 @@ class MainController extends Controller
             $tileActive = $tileHelper->createActiveTileFromConquestMap($tileId, $mapRes['conquest_map']['map']);
         }
         $tileInfo = $scout->getTileInfo();
+        if(is_null($tileInfo)){
+            echo "error or tile is not in attack";
+            exit;
+        }
         foreach ($tileInfo as $tileSlotData){
             $slotId = $tileSlotData['systemSlotId'];
             $scoutSlotData = $scout->scoutTileSlot($slotId);

@@ -31,7 +31,7 @@ class Scout
             $ret = $this->bot->getConquestTileInfo($this->tailId);
             $this->tileInfo = $ret['system'];
         }
-        if(is_null($ret)) return array();
+        if(is_null($ret)) return NULL;
 
         $slots = array();
 
