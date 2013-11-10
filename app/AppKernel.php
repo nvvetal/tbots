@@ -1,5 +1,7 @@
 <?php
 
+set_time_limit(3600);
+
 use Symfony\Component\HttpKernel\Kernel;
 use Symfony\Component\Config\Loader\LoaderInterface;
 

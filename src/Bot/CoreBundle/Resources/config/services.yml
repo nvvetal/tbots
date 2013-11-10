@@ -25,3 +25,7 @@ services:
     class: Bot\CoreBundle\Helper\OptimizerHelper
     arguments: [@service_container, @helper.cards, @helper.deck]
 
+  helper.tile:
+    class: Bot\CoreBundle\Helper\TileHelper
+    arguments: [@service_container]
+

@@ -8,9 +8,10 @@ use Doctrine\ORM\Mapping as ORM;
  * TileSlot
  *
  * @ORM\Table(name="tile_slot")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Bot\CoreBundle\Entity\TileSlotRepository")
+ * @ORM\HasLifecycleCallbacks
  */
-class TileDeck
+class TileSlot
 {
     const SCOUT_STATUS_NEW = 1;
     const SCOUT_STATUS_PROCESS = 2;
@@ -33,6 +34,12 @@ class TileDeck
 
     /**
      * @var integer
+     * @ORM\Column(name="slot_id", type="integer")
+     */
+    protected $slotId;
+
+    /**
+     * @var integer
      * @ORM\Column(name="cards_count", type="integer")
      */
     protected $cardsCount;
@@ -40,13 +47,13 @@ class TileDeck
 
     /**
      * @var string
-     * @ORM\Column(name="hash", type="string")
+     * @ORM\Column(name="deck_hash", type="string")
      */
-    protected $hash;
+    protected $deckHash;
 
     /**
      * @var integer
-     * @ORM\Column(name="max_percent", type="integer")
+     * @ORM\Column(name="max_percent", type="integer", nullable=true)
      */
     protected $maxPercent; //use for def decks in future
 
@@ -78,9 +85,9 @@ class TileDeck
      * @param string $hash
      * @return TileDeck
      */
-    public function setHash($hash)
+    public function setDeckHash($hash)
     {
-        $this->hash = $hash;
+        $this->deckHash = $hash;
     
         return $this;
     }
@@ -90,9 +97,9 @@ class TileDeck
      *
      * @return string 
      */
-    public function getHash()
+    public function getDeckHash()
     {
-        return $this->hash;
+        return $this->deckHash;
     }
 
     /**
@@ -195,5 +202,34 @@ class TileDeck
     {
         return $this->scoutStatus;
     }
+
+    /**
+     * @param int $slotId
+     */
+    public function setSlotId($slotId)
+    {
+        $this->slotId = $slotId;
+    }
+
+    /**
+     * @return int
+     */
+    public function getSlotId()
+    {
+        return $this->slotId;
+    }
+
+    /**
+     * @ORM\PrePersist()
+     */
+    public function prePersist()
+    {
+        if (is_null($this->getScoutStatus())) {
+            $this->setScoutStatus(self::SCOUT_STATUS_NEW);
+        }
+        $this->setIsActive(1);
+    }
+
+
 
 }

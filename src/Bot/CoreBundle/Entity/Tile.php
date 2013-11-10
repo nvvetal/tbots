@@ -8,7 +8,8 @@ use Doctrine\ORM\Mapping as ORM;
  * Tile
  *
  * @ORM\Table(name="tile")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Bot\CoreBundle\Entity\TileRepository")
+ * @ORM\HasLifecycleCallbacks
  */
 class Tile
 {
@@ -42,25 +43,31 @@ class Tile
 
     /**
      * @var integer
-     * @ORM\Column(name="credits", type="integer")
+     * @ORM\Column(name="effect", type="integer", nullable=true)
+     */
+    protected $effect;
+
+    /**
+     * @var integer
+     * @ORM\Column(name="credits", type="integer", nullable=true)
      */
     protected $credits;
 
     /**
      * @var string
-     * @ORM\Column(name="faction", type="string")
+     * @ORM\Column(name="faction", type="string", nullable=true)
      */
     protected $faction;
 
     /**
      * @var integer
-     * @ORM\Column(name="decks_count", type="integer")
+     * @ORM\Column(name="decks_count", type="integer", nullable=true)
      */
     protected $decksCount;
 
     /**
      * @var integer
-     * @ORM\Column(name="min_energy_need", type="integer")
+     * @ORM\Column(name="min_energy_need", type="integer", nullable=true)
      */
     protected $minEnergyNeed;
 
@@ -72,7 +79,7 @@ class Tile
 
     /**
      * @var integer
-     * @ORM\Column(name="last_attack_time", type="integer")
+     * @ORM\Column(name="last_attack_time", type="integer", nullable=true)
      */
     protected $lastAttackTime;
 
@@ -81,6 +88,13 @@ class Tile
      * @ORM\Column(name="created_time", type="integer")
      */
     protected $createdTime;
+
+    /**
+     * @var integer
+     * @ORM\Column(name="attack_start_time", type="integer")
+     */
+    protected $attackStartTime;
+
 
     /**
      * Get id
@@ -299,6 +313,49 @@ class Tile
     public function getY()
     {
         return $this->y;
+    }
+
+    /**
+     * @param int $effect
+     */
+    public function setEffect($effect)
+    {
+        $this->effect = $effect;
+    }
+
+    /**
+     * @return int
+     */
+    public function getEffect()
+    {
+        return $this->effect;
+    }
+
+    /**
+     * @param int $attackStartTime
+     */
+    public function setAttackStartTime($attackStartTime)
+    {
+        $this->attackStartTime = $attackStartTime;
+    }
+
+    /**
+     * @return int
+     */
+    public function getAttackStartTime()
+    {
+        return $this->attackStartTime;
+    }
+
+    /**
+     * @ORM\PrePersist()
+     */
+    public function prePersist()
+    {
+        if (is_null($this->getIsActive())) {
+            $this->setIsActive(0);
+        }
+        $this->setCreatedTime(time());
     }
 
 }

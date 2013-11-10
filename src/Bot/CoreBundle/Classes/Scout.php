@@ -31,6 +31,7 @@ class Scout
             $ret = $this->bot->getConquestTileInfo($this->tailId);
             $this->tileInfo = $ret['system'];
         }
+        if(is_null($ret)) return array();
 
         $slots = array();
 
@@ -55,6 +56,7 @@ class Scout
         $canAttack = $this->bot->canAttackTile($this->tailId, $slotId);
         if(!$canAttack['ok']) return false;
         $ret = $this->bot->attackConquestTile($this->tailId, $slotId);
+        if($ret['ok'] == false) return false;
         $this->updateScoutTileSlot($slotId, $ret);
         return $this->getSlotDeck($slotId);
     }

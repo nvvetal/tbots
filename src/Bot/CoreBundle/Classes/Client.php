@@ -30,6 +30,7 @@ abstract class Client
     protected $maxStamina = 300;
     protected $logName = '';
     protected $tileAttackCD = array();
+    protected $factionId;
 
     protected $activeDeckId;
     protected $defenseDeckId;
@@ -120,9 +121,9 @@ abstract class Client
     public function init()
     {
         $init = $this->request('init');
-
         $this->activeDeckId = $init['user_data']['active_deck'];
         $this->defenseDeckId = $init['user_data']['defense_deck'];
+        $this->factionId = $init['faction_id'];
 
         if (empty($init['user_data']['flags']['autopilot'])) {
             $this->setUserFlag(self::FLAG_AUTOPILOT, 1);
@@ -141,6 +142,11 @@ abstract class Client
         for ($i = 0; $i < $sec; $i++) {
             sleep(1);
         }
+    }
+
+    public function getFactionId()
+    {
+        return $this->factionId;
     }
 
     public function getEnergy()
@@ -454,10 +460,17 @@ abstract class Client
                 'slot_id'   => $slotId,
             )
         );
-        $this->stamina -= 20;
 
+        if(isset($t['result']) && $t['result'] == false){
+            return array(
+                'ok' => false,
+                'error' => $t['msg'],
+            );
+        }
+        $this->stamina -= 20;
         $isDefender = !empty($t['is_defender']);
         $enemyDeck = array();
+
         $enemyCommanderId = $isDefender ? $t['attack_commander'] : $t['defend_commander'];
         $i = 0;
         $isMyTurn = $isDefender;
@@ -487,6 +500,7 @@ abstract class Client
         $this->tileAttackCD[$systemId.':'.$slotId] = time() + self::CONQUEST_ATTACK_TILE_CD;
 
         return array(
+            'ok'                => true,
             'enemyCommanderId'  => $enemyCommanderId,
             'enemyDeck'         => $enemyDeck,
             'enemyDeckHash'     => $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false),
