@@ -31,6 +31,7 @@ abstract class Client
     protected $logName = '';
     protected $tileAttackCD = array();
     protected $factionId;
+    protected $timeDiff = 0;
 
     protected $activeDeckId;
     protected $defenseDeckId;
@@ -44,9 +45,9 @@ abstract class Client
     {
         $url = sprintf('%s?user_id=%s&message=%s', $this->apiUrl, $this->userId, $action);
 
-        $time = ceil(time() / (60 * 15));
-        if ($action == 'init') {
-            $time = 0;
+        $time = 0;
+        if ($action != 'init') {
+            $time = ceil((time() - $this->timeDiff) / (60 * 15));
         }
         $ccache = md5($time . $this->userId);
         $hash = md5($action . $time . $this->timeHash);
@@ -104,6 +105,11 @@ abstract class Client
             return $res;
         }
         $d = @json_decode($res, true);
+
+        if (!empty($d['time'])) {
+            $this->timeDiff = time() - $d['time'];
+        }
+
         if (!empty($d['version']) && $this->version != $d['version']) {
             $this->event_versionChanged($d['version']);
         }
