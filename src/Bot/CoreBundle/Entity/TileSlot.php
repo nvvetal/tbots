@@ -52,6 +52,12 @@ class TileSlot
     protected $deckHash;
 
     /**
+     * @var string
+     * @ORM\Column(name="deck_carts", type="text")
+     */
+    protected $deckCards;
+
+    /**
      * @var integer
      * @ORM\Column(name="max_percent", type="integer", nullable=true)
      */
@@ -217,6 +223,22 @@ class TileSlot
     public function getSlotId()
     {
         return $this->slotId;
+    }
+
+    /**
+     * @param mixed $deckCards
+     */
+    public function setDeckCards($deckCards)
+    {
+        $this->deckCards = $deckCards;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getDeckCards()
+    {
+        return $this->deckCards;
     }
 
     /**
