@@ -22,8 +22,6 @@ class MainController extends Controller
         $bot->setFlashCode($this->container->getParameter('test_bot_hash'));
         $bClient = $botHelper->getBotClient($bot);
         $mapRes = $bClient->getConquestMap();
-        echo "<pre>";
-        var_dump($mapRes);
         if($mapRes['result'] == false){
             echo "cannot get map";
             exit;
@@ -49,8 +47,14 @@ class MainController extends Controller
             exit;
         }
         foreach ($tileInfo as $tileSlotData){
+            if($tileSlotData['defeated'] == 1) continue;
             $slotId = $tileSlotData['systemSlotId'];
             $scoutSlotData = $scout->scoutTileSlot($slotId);
+            //TODO: more info
+            if($scoutSlotData === false) continue;
+//            echo "<pre>";
+//            var_dump($scoutSlotData);
+            exit;
             $tileHelper->fillTileSlot($tileActive, $slotId, $scoutSlotData);
             sleep(10);
         }

@@ -97,10 +97,12 @@ class TileHelper
     }
 
     public function createTileSlot($tile, $slotId, $slotData){
+        $deckCards = array('commander' => $slotData['enemyCommanderId'], 'cards' => $slotData['enemyDeck']);
         $tileSlot = new TileSlot();
         $tileSlot->setDeckHash($slotData['enemyDeckHash']);
         $tileSlot->setScoutStatus(TileSlot::SCOUT_STATUS_FINISHED);
         $tileSlot->setCardsCount(count($slotData['enemyDeck']));
+        $tileSlot->setDeckCards(json_encode($deckCards));
         $tileSlot->setTile($tile);
         $tileSlot->setSlotId($slotId);
         $this->em->persist($tileSlot);

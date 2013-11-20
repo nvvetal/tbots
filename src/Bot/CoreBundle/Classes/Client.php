@@ -98,8 +98,6 @@ abstract class Client
         }
         sleep(3);
         $res = curl_exec($ch);
-        echo "<pre>";
-        var_dump($headers, '---', $url, '---', $urlPostData, '---', $res, '---', curl_error($ch));
         curl_close($ch);
         if (!empty($extraFields['raw'])) {
             return $res;
