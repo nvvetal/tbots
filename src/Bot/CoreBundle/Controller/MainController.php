@@ -22,7 +22,8 @@ class MainController extends Controller
         $bot->setFlashCode($this->container->getParameter('test_bot_hash'));
         $bClient = $botHelper->getBotClient($bot);
         $mapRes = $bClient->getConquestMap();
-
+        echo "<pre>";
+        var_dump($mapRes);
         if($mapRes['result'] == false){
             echo "cannot get map";
             exit;

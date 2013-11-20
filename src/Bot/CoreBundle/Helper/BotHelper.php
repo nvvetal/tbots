@@ -15,7 +15,7 @@ class BotHelper
     public function getOwnedCardsFileName(Bot $bot)
     {
         $path = $this->container->getParameter('bot_data');
-        return $path.$bot->getUserId().'.txt';
+        return $path.'/'.$bot->getUserId().'.txt';
     }
 
     public function getBotClient(Bot $bot)

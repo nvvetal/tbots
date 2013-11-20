@@ -12,7 +12,7 @@ class XMLHelper
 
     public function getCards()
     {
-        $fileName = $this->container->getParameter('optimizer_path').'cards.xml';
+        $fileName = $this->container->getParameter('optimizer_path').'/cards.xml';
         $xml = (array) simplexml_load_file($fileName);
         if (!$xml) {
             return NULL;

@@ -78,7 +78,7 @@ class OptimizerHelper
         $botHelper = $this->container->get('helper.bot');
         $optimizerPath = $this->container->getParameter('optimizer_path');
         $result = "";
-        $optimizerCommand = $optimizerPath.'tyrant_optimize';
+        $optimizerCommand = $optimizerPath.'/tyrant_optimize';
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             $optimizerCommand .= '.exe';
         }

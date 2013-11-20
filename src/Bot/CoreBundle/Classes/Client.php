@@ -52,6 +52,7 @@ abstract class Client
         $hash = md5($action . $time . $this->timeHash);
 
         $postData = array(
+            ''                  => '',
             'flashcode'         => $this->flashCode,
             'time'              => $action == 'init' ? '0' : $time,
             'version'           => $action == 'init' ? '' : $this->version,
@@ -87,6 +88,7 @@ abstract class Client
         curl_setopt($ch, CURLOPT_HEADER, false);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
+
         if (!empty($extraFields['url'])) {
             curl_setopt($ch, CURLOPT_URL, $extraFields['url']);
         } else {
@@ -95,6 +97,8 @@ abstract class Client
         }
         sleep(3);
         $res = curl_exec($ch);
+        echo "<pre>";
+        var_dump($headers, '---', $url, '---', $urlPostData, '---', $res, '---', curl_error($ch));
         curl_close($ch);
         if (!empty($extraFields['raw'])) {
             return $res;

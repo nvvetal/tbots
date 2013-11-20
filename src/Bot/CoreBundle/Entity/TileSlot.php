@@ -47,13 +47,13 @@ class TileSlot
 
     /**
      * @var string
-     * @ORM\Column(name="deck_hash", type="string")
+     * @ORM\Column(name="deck_hash", type="string", nullable=true)
      */
     protected $deckHash;
 
     /**
      * @var string
-     * @ORM\Column(name="deck_carts", type="text")
+     * @ORM\Column(name="deck_cards", type="text", nullable=true)
      */
     protected $deckCards;
 
