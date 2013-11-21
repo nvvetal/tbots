@@ -49,7 +49,11 @@ class MainController extends Controller
             exit;
         }
         foreach ($tileInfo as $tileSlotData){
-            if($tileSlotData['defeated'] == 1) continue;
+            /*echo "<pre>";
+            var_dump($tileSlotData);
+            exit;
+            */
+            if(isset($tileSlotData['defeated']) && $tileSlotData['defeated'] == 1) continue;
             $slotId = $tileSlotData['systemSlotId'];
             $res = $scout->scoutTileSlot($slotId);
             if($res['ok'] === false) {
@@ -57,6 +61,7 @@ class MainController extends Controller
                 continue;
             }
             $tileHelper->fillTileSlot($tileActive, $slotId, $res['slotData']);
+            exit;
             sleep(10);
         }
         return array('name' => 'test');

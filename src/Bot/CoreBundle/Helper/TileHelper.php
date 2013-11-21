@@ -84,9 +84,18 @@ class TileHelper
         try {
             $tileSlot = $this->em->getRepository('BotCoreBundle:TileSlot')
                 ->findActiveTileSlotByTileAndSlotId($tile, $slotId);
-            if($tileSlot->getDeckHash() != $slotData['enemyDeckHash']){
+            $craftedDeckCards = $this->getDeckCards($slotData);
+            $currentDeckCards = json_decode($tileSlot->getDeckCards(), true);
+            if(!$this->isCurrentDeckCardsValid($currentDeckCards, $craftedDeckCards)){
                 $this->em->getRepository('BotCoreBundle:TileSlot')->unsetActiveTileSlotByTileAndSlotId($tile, $slotId);
                 $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
+            }else{
+                $mergedDeckCards = $this->mergeDeckCards($currentDeckCards, $craftedDeckCards);
+                $enemyFullDeck = array_unhift($mergedDeckCards['cards'], $mergedDeckCards['commander']);
+                $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
+                $tileSlot->setDeckCards(json_encode($mergedDeckCards));
+                $tileSlot->setDeckHash($enemyHash);
+                //TODO: throw event that deck changed
             }
         }catch(NoResultException $e) {
             $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
@@ -96,18 +105,68 @@ class TileHelper
         return $tileSlot;
     }
 
-    private function checkCurrentDeckCards($currentDeckCards, $craftedDeckCards)
+    private function isCurrentDeckCardsValid($currentDeckCards, $craftedDeckCards)
     {
+        $isCommanderSame = $this->isCommanderSame($currentDeckCards, $craftedDeckCards['commander']);
+        if(!$isCommanderSame) return array('ok' => false, 'error' => 'different commander');
 
+        $currentDeckCardsCounted = $this->getDeckCardsCounted($currentDeckCards);
+        $craftedDeckCardsCounted = $this->getDeckCardsCounted($craftedDeckCards);
+
+        foreach ($craftedDeckCardsCounted as $cardId => $cardCount)
+        {
+            if(!isset($currentDeckCardsCounted[$cardId]) && (count($craftedDeckCards['cards']) == 10 || count($currentDeckCards['cards']) == 10)){
+                return array('ok' => false, 'error' => 'new card matched - '.$cardId);
+            }
+
+            if(isset($currentDeckCardsCounted[$cardId]) && $cardCount > $currentDeckCardsCounted[$cardId] && count($currentDeckCards['cards']) == 10)
+            {
+                return array('ok' => false, 'error' => 'same cards increased - '.$cardId.', count - '.$cardCount);
+            }
+        }
+        return array('ok' => true);
     }
 
-    public function isCommanderSame($currentDeckCommander, $craftedDeckCommander)
+    private function mergeDeckCards($currentDeckCards, $craftedDeckCards)
     {
+        $currentDeckCardsCounted = $this->getDeckCardsCounted($currentDeckCards);
+        $craftedDeckCardsCounted = $this->getDeckCardsCounted($craftedDeckCards);
+        $mergedDeckCards = array();
+        foreach ($craftedDeckCardsCounted as $cardId => $cardCount)
+        {
+            if(!isset($currentDeckCardsCounted[$cardId])) {
+                for ($i = 0; $i < $cardCount; $i++){
+                    $mergedDeckCards[] = $cardCount;
+                }
+            }else{
+                $maxCards = $cardCount > $currentDeckCardsCounted[$cardId] ? $cardCount : $currentDeckCardsCounted[$cardId];
+                for ($i = 0; $i < $maxCards; $i++){
+                    $mergedDeckCards[] = $cardCount;
+                }
+            }
+        }
 
+        return array('commander' => $currentDeckCards['commander'], 'cards' => $mergedDeckCards);
+    }
+
+    private function getDeckCardsCounted($deckCards)
+    {
+        $cards = array();
+        foreach($deckCards['cards'] as $card)
+        {
+            $cards[$card] = isset($cards[$card]) ? $cards[$card]+1 : 1;
+        }
+        return $cards;
+    }
+
+    public function isCommanderSame($currentDeckCards, $craftedCommanderId)
+    {
+        $isSame = $currentDeckCards['commander'] == $craftedCommanderId;
+        return $isSame;
     }
 
     public function createTileSlot($tile, $slotId, $slotData){
-        $deckCards = array('commander' => $slotData['enemyCommanderId'], 'cards' => $slotData['enemyDeck']);
+        $deckCards = $this->getDeckCards($slotData);
         $tileSlot = new TileSlot();
         $tileSlot->setDeckHash($slotData['enemyDeckHash']);
         $tileSlot->setScoutStatus(TileSlot::SCOUT_STATUS_FINISHED);
@@ -118,5 +177,11 @@ class TileHelper
         $this->em->persist($tileSlot);
         $this->em->flush();
         return $tileSlot;
+    }
+
+    public function getDeckCards($slotData)
+    {
+        $deckCards = array('commander' => $slotData['enemyCommanderId'], 'cards' => $slotData['enemyDeck']);
+        return $deckCards;
     }
 }
