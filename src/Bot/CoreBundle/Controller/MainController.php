@@ -23,6 +23,7 @@ class MainController extends Controller
         $bClient = $botHelper->getBotClient($bot);
         $mapRes = $bClient->getConquestMap();
         if($mapRes['result'] == false){
+            $this->container->get('logger')->write('[type map][error cannot get map]', 'error_scout');
             echo "cannot get map";
             exit;
         }
@@ -43,19 +44,19 @@ class MainController extends Controller
         }
         $tileInfo = $scout->getTileInfo();
         if(is_null($tileInfo)){
+            $this->container->get('logger')->write('[type map][error error or tile is not in attack]', 'error_scout');
             echo "error or tile is not in attack";
             exit;
         }
         foreach ($tileInfo as $tileSlotData){
             if($tileSlotData['defeated'] == 1) continue;
             $slotId = $tileSlotData['systemSlotId'];
-            $scoutSlotData = $scout->scoutTileSlot($slotId);
-            //TODO: more info
-            if($scoutSlotData === false) continue;
-//            echo "<pre>";
-//            var_dump($scoutSlotData);
-            exit;
-            $tileHelper->fillTileSlot($tileActive, $slotId, $scoutSlotData);
+            $res = $scout->scoutTileSlot($slotId);
+            if($res['ok'] === false) {
+                $this->container->get('logger')->write('[type slot][slot '.$slotId.'][error '.$res['error'].']', 'error_scout');
+                continue;
+            }
+            $tileHelper->fillTileSlot($tileActive, $slotId, $res['slotData']);
             sleep(10);
         }
         return array('name' => 'test');

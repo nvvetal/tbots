@@ -96,6 +96,16 @@ class TileHelper
         return $tileSlot;
     }
 
+    private function checkCurrentDeckCards($currentDeckCards, $craftedDeckCards)
+    {
+
+    }
+
+    public function isCommanderSame($currentDeckCommander, $craftedDeckCommander)
+    {
+
+    }
+
     public function createTileSlot($tile, $slotId, $slotData){
         $deckCards = array('commander' => $slotData['enemyCommanderId'], 'cards' => $slotData['enemyDeck']);
         $tileSlot = new TileSlot();

@@ -54,11 +54,11 @@ class Scout
         }
 
         $canAttack = $this->bot->canAttackTile($this->tailId, $slotId);
-        if(!$canAttack['ok']) return false;
+        if(!$canAttack['ok']) return $canAttack;
         $ret = $this->bot->attackConquestTile($this->tailId, $slotId);
-        if($ret['ok'] == false) return false;
+        if($ret['ok'] == false) return $ret;
         $this->updateScoutTileSlot($slotId, $ret);
-        return $this->getSlotDeck($slotId);
+        return array('ok' => true, 'slotData' => $this->getSlotDeck($slotId));
     }
 
     public function updateScoutTileSlot($slotId, $data)
