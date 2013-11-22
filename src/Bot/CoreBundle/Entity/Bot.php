@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
  * Bot
  *
  * @ORM\Table(name="bot")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Bot\CoreBundle\Entity\BotRepository")
  */
 class Bot
 {
@@ -112,6 +112,31 @@ class Bot
      * @ORM\Column(name="last_action_time", type="integer")
      */
     protected $lastActionTime;
+
+    /**
+     * @var integer
+     * @ORM\Column(name="is_scout", type="integer")
+     */
+    protected $isScout;
+
+    public function setScout()
+    {
+        $this->isScout = 1;
+    }
+
+    public function unsetScout()
+    {
+        $this->isScout = 1;
+    }
+
+
+    /**
+     * @return bool
+     */
+    public function isScout()
+    {
+        return $this->isScout == 1;
+    }
 
     /**
      * Get id

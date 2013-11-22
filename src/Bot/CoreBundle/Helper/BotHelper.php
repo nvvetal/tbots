@@ -6,6 +6,7 @@ use Bot\CoreBundle\Classes\User;
 class BotHelper
 {
     private $container;
+    private $scouts = NULL;
 
     public function __construct($container)
     {
@@ -49,5 +50,37 @@ class BotHelper
         return $user;
     }
 
+    public function getScouts()
+    {
+        if(!is_null($this->scouts) && count($this->scouts) > 0) return $this->scouts;
+        $scoutsActive = $this->container->get('Doctrine')->getManager()->getRepository('BotCoreBundle:Bot')->findScouts();
+        $this->scouts = array();
+        if(count($scoutsActive) == 0) return $this->scouts;
+        $i = 0;
+        foreach($scoutsActive as $scout)
+        {
 
+            $this->scouts[] = array(
+                'loaded'    => false,
+                'scout'     => $scout,
+                'id'        => $i,
+            );
+            $i++;
+        }
+        return $this->scouts;
+    }
+
+
+    public function getNextScout($currentId = -1)
+    {
+        if(is_null($this->scouts)) $this->getScouts();
+        if(count($this->scouts) == 0) return NULL;
+        $nextId = $currentId+1;
+        if(!isset($this->scouts[$nextId])) return NULL;
+        if(!$this->scouts[$nextId]['loaded']){
+            $this->scouts[$nextId]['loaded'] = true;
+            $this->scouts[$nextId]['client'] = $this->getBotClient($this->scouts[$nextId]['scout']);
+        }
+        return $this->scouts[$nextId];
+    }
 }

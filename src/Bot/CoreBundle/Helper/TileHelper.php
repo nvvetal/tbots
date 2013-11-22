@@ -78,8 +78,9 @@ class TileHelper
         return $tile;
     }
 
-    public function fillTileSlot($tile, $slotId, $slotData)
+    public function fillTileSlot(Tile $tile, $slotId, $slotData)
     {
+        if(is_null($tile->getFaction())) return $this->fillTileSlotWithoutOwner($tile, $slotId, $slotData);
         $tileSlot = NULL;
         try {
             $tileSlot = $this->em->getRepository('BotCoreBundle:TileSlot')
@@ -91,12 +92,39 @@ class TileHelper
                 $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
             }else{
                 $mergedDeckCards = $this->mergeDeckCards($currentDeckCards, $craftedDeckCards);
-                $enemyFullDeck = array_unhift($mergedDeckCards['cards'], $mergedDeckCards['commander']);
+                $enemyFullDeck = array_unshift($mergedDeckCards['cards'], $mergedDeckCards['commander']);
                 $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
                 $tileSlot->setDeckCards(json_encode($mergedDeckCards));
+                $tileSlot->setCardsCount(count($mergedDeckCards['cards']));
                 $tileSlot->setDeckHash($enemyHash);
+                $this->em->flush();
                 //TODO: throw event that deck changed
             }
+        }catch(NoResultException $e) {
+            $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
+        }catch(\Exception $e){
+
+        }
+        return $tileSlot;
+    }
+
+    private function fillTileSlotWithoutOwner(Tile $tile, $slotId, $slotData)
+    {
+        $tileSlot = NULL;
+        try {
+            $tileSlot = $this->em->getRepository('BotCoreBundle:TileSlot')
+                ->findActiveTileSlotByTileAndSlotId($tile, $slotId);
+            $craftedDeckCards = $this->getDeckCards($slotData);
+            $currentDeckCards = json_decode($tileSlot->getDeckCards(), true);
+
+            $mergedDeckCards = $this->mergeDeckCards($currentDeckCards, $craftedDeckCards);
+            $enemyFullDeck = array_unshift($mergedDeckCards['cards'], $mergedDeckCards['commander']);
+            $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
+            $tileSlot->setDeckCards(json_encode($mergedDeckCards));
+            $tileSlot->setDeckHash($enemyHash);
+            $tileSlot->setCardsCount(count($mergedDeckCards['cards']));
+            $this->em->flush();
+            //TODO: throw event that deck changed
         }catch(NoResultException $e) {
             $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
         }catch(\Exception $e){
@@ -136,12 +164,12 @@ class TileHelper
         {
             if(!isset($currentDeckCardsCounted[$cardId])) {
                 for ($i = 0; $i < $cardCount; $i++){
-                    $mergedDeckCards[] = $cardCount;
+                    $mergedDeckCards[] = $cardId;
                 }
             }else{
                 $maxCards = $cardCount > $currentDeckCardsCounted[$cardId] ? $cardCount : $currentDeckCardsCounted[$cardId];
                 for ($i = 0; $i < $maxCards; $i++){
-                    $mergedDeckCards[] = $cardCount;
+                    $mergedDeckCards[] = $cardId;
                 }
             }
         }

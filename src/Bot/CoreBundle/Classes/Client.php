@@ -447,6 +447,21 @@ abstract class Client
         return $this->request('getConquestMap');
     }
 
+    public function declareConquestWar()
+    {
+        return $this->request(
+            'getConquestTileInfo',
+            array(
+                'tileX' => '',
+                'tileY' => '',
+            )
+        );
+        return $this->request('declareConquestWar');
+        /*
+         {"result":true,"update_tile":1,"system":{"system_id":"876","x":"2","y":"-14","faction_id":null,"terrain":"12","asset":"12","rating":1,"level_cap":"0","max_decks":20,"color":null,"protection_end_time":null,"attacking_faction_id":"9902001","attacking_faction_name":"KOMMUNISTS","attack_end_time":1385132138,"attack_start_time":1385110538,"effect":"14","max_health":100,"slots":{"1":{"system_id":"876","system_slot_id":"1","health":"100","defeated":"0","commander_id":"1119","protection_end_time":null},"2":{"system_id":"876","system_slot_id":"2","health":"100","defeated":"0","commander_id":"1229","protection_end_time":null},"3":{"system_id":"876","system_slot_id":"3","health":"100","defeated":"0","commander_id":"1292","protection_end_time":null},"4":{"system_id":"876","system_slot_id":"4","health":"100","defeated":"0","commander_id":"1228","protection_end_time":null},"5":{"system_id":"876","system_slot_id":"5","health":"100","defeated":"0","commander_id":"1081","protection_end_time":null}}},"faction_info":{"faction_id":"9902001","creator_id":"1476996495","name":"KOMMUNISTS","is_public":"1","activity_level":"88","num_members":"16","last_activity_check":"16031","level":"9","rating":"1635","wins":"275","losses":"85","inactive":"0","is_full":"0","infamy":"0","last_infamy_update":"1385098103","total_infamy":"5","banned":"0","message":"Please login in http:\/\/tyrant.40in.net","color":"13369344","num_territories":"0","attacked_territories":"{\"956\":1385027719,\"876\":1385110538}","conquest_rating":"0","attack_end_time":"1385132138","conquest_attacks":"5","conquest_attack_recharge":"1385110538","conquest_defends":"0","conquest_defends_time":"1385105059","conquest_abandon_time":"0","max_members":"50","result":true}}
+        */
+    }
+
     public function getConquestTileInfo($systemId)
     {
         return $this->request(
