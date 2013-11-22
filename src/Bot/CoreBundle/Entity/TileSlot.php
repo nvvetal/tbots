@@ -59,6 +59,12 @@ class TileSlot
 
     /**
      * @var integer
+     * @ORM\Column(name="health", type="integer")
+     */
+    protected $health;
+
+    /**
+     * @var integer
      * @ORM\Column(name="max_percent", type="integer", nullable=true)
      */
     protected $maxPercent; //use for def decks in future
@@ -239,6 +245,22 @@ class TileSlot
     public function getDeckCards()
     {
         return $this->deckCards;
+    }
+
+    /**
+     * @param mixed $health
+     */
+    public function setHealth($health)
+    {
+        $this->health = $health;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHealth()
+    {
+        return $this->health;
     }
 
     /**

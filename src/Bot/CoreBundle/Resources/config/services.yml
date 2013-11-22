@@ -29,3 +29,11 @@ services:
     class: Bot\CoreBundle\Helper\TileHelper
     arguments: [@service_container]
 
+
+
+  listener.tile.slot.update:
+    class: Bot\CoreBundle\Listener\TileSlotListener
+    arguments:  [@service_container, @doctrine.orm.entity_manager]
+    tags:
+      - { name: kernel.event_listener, event: tile.slot.update, method: onUpdate }
+

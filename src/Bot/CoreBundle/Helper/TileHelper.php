@@ -3,7 +3,10 @@ namespace Bot\CoreBundle\Helper;
 
 use Bot\CoreBundle\Entity\Tile;
 use Bot\CoreBundle\Entity\TileSlot;
+use Bot\CoreBundle\TileSlotEvents;
+use Bot\CoreBundle\Event\FilterTileSlotEvent;
 use Doctrine\ORM\NoResultException;
+
 
 class TileHelper
 {
@@ -119,18 +122,24 @@ class TileHelper
             $currentDeckCards = json_decode($tileSlot->getDeckCards(), true);
 
             $mergedDeckCards = $this->mergeDeckCards($currentDeckCards, $craftedDeckCards);
+
             $enemyFullDeck = $mergedDeckCards['cards'];
             array_unshift($enemyFullDeck, $mergedDeckCards['commander']);
             $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
-            $tileSlot->setDeckCards(json_encode($mergedDeckCards));
-            $tileSlot->setDeckHash($enemyHash);
-            $tileSlot->setCardsCount(count($mergedDeckCards['cards']));
-            $this->em->flush();
-            //TODO: throw event that deck changed
+            $dispatcher = $this->container->get('event_dispatcher');
+            $eventData = array(
+                'deckCards' => $mergedDeckCards,
+                'deckHash'  => $enemyHash,
+                //TODO: get health somehow
+                'health'    => 0,
+            );
+            $event = new FilterTileSlotEvent($tileSlot, $eventData);
+            $dispatcher->dispatch(TileSlotEvents::TILE_SLOT_UPDATE, $event);
         }catch(NoResultException $e) {
             $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
         }catch(\Exception $e){
-
+            echo $e->getMessage();
+            exit;
         }
         return $tileSlot;
     }
@@ -201,14 +210,20 @@ class TileHelper
     public function createTileSlot($tile, $slotId, $slotData){
         $deckCards = $this->getDeckCards($slotData);
         $tileSlot = new TileSlot();
-        $tileSlot->setDeckHash($slotData['enemyDeckHash']);
         $tileSlot->setScoutStatus(TileSlot::SCOUT_STATUS_FINISHED);
-        $tileSlot->setCardsCount(count($slotData['enemyDeck']));
-        $tileSlot->setDeckCards(json_encode($deckCards));
         $tileSlot->setTile($tile);
         $tileSlot->setSlotId($slotId);
         $this->em->persist($tileSlot);
         $this->em->flush();
+        $dispatcher = $this->container->get('event_dispatcher');
+        $eventData = array(
+            'deckCards' => $deckCards,
+            'deckHash'  => $slotData['enemyDeckHash'],
+            //TODO: get health somehow
+            'health'    => 0,
+        );
+        $event = new FilterTileSlotEvent($tileSlot, $eventData);
+        $dispatcher->dispatch(TileSlotEvents::TILE_SLOT_UPDATE, $event);
         return $tileSlot;
     }
 
