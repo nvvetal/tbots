@@ -92,7 +92,8 @@ class TileHelper
                 $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
             }else{
                 $mergedDeckCards = $this->mergeDeckCards($currentDeckCards, $craftedDeckCards);
-                $enemyFullDeck = array_unshift($mergedDeckCards['cards'], $mergedDeckCards['commander']);
+                $enemyFullDeck = $mergedDeckCards['cards'];
+                array_unshift($enemyFullDeck, $mergedDeckCards['commander']);
                 $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
                 $tileSlot->setDeckCards(json_encode($mergedDeckCards));
                 $tileSlot->setCardsCount(count($mergedDeckCards['cards']));
@@ -118,7 +119,8 @@ class TileHelper
             $currentDeckCards = json_decode($tileSlot->getDeckCards(), true);
 
             $mergedDeckCards = $this->mergeDeckCards($currentDeckCards, $craftedDeckCards);
-            $enemyFullDeck = array_unshift($mergedDeckCards['cards'], $mergedDeckCards['commander']);
+            $enemyFullDeck = $mergedDeckCards['cards'];
+            array_unshift($enemyFullDeck, $mergedDeckCards['commander']);
             $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
             $tileSlot->setDeckCards(json_encode($mergedDeckCards));
             $tileSlot->setDeckHash($enemyHash);
@@ -160,6 +162,9 @@ class TileHelper
         $currentDeckCardsCounted = $this->getDeckCardsCounted($currentDeckCards);
         $craftedDeckCardsCounted = $this->getDeckCardsCounted($craftedDeckCards);
         $mergedDeckCards = array();
+        foreach ($currentDeckCardsCounted as $cardId => $cardCount){
+            $mergedDeckCards[] = $cardId;
+        }
         foreach ($craftedDeckCardsCounted as $cardId => $cardCount)
         {
             if(!isset($currentDeckCardsCounted[$cardId])) {
@@ -167,7 +172,7 @@ class TileHelper
                     $mergedDeckCards[] = $cardId;
                 }
             }else{
-                $maxCards = $cardCount > $currentDeckCardsCounted[$cardId] ? $cardCount : $currentDeckCardsCounted[$cardId];
+                $maxCards = $cardCount > $currentDeckCardsCounted[$cardId] ? $cardCount - $currentDeckCardsCounted[$cardId] : 0;
                 for ($i = 0; $i < $maxCards; $i++){
                     $mergedDeckCards[] = $cardId;
                 }
