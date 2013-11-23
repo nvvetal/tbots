@@ -73,6 +73,12 @@ class Tile
 
     /**
      * @var integer
+     * @ORM\Column(name="max_percent", type="integer", nullable=true)
+     */
+    protected $maxPercent; //use for def decks in future
+
+    /**
+     * @var integer
      * @ORM\Column(name="is_active", type="integer")
      */
     protected $isActive;
@@ -345,6 +351,29 @@ class Tile
     public function getAttackStartTime()
     {
         return $this->attackStartTime;
+    }
+
+    /**
+     * Set maxPercent
+     *
+     * @param integer $maxPercent
+     * @return Tile
+     */
+    public function setMaxPercent($maxPercent)
+    {
+        $this->maxPercent = $maxPercent;
+
+        return $this;
+    }
+
+    /**
+     * Get maxPercent
+     *
+     * @return integer
+     */
+    public function getMaxPercent()
+    {
+        return $this->maxPercent;
     }
 
     /**

@@ -52,7 +52,6 @@ class MainController extends Controller
             exit;
         }
         foreach ($tileInfo as $tileSlotData){
-
             if(
                 (isset($tileSlotData['defeated']) && $tileSlotData['defeated'] == 1) ||
                 (isset($tileSlotData['health']) && $tileSlotData['health'] == 0)

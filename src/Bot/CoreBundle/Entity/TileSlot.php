@@ -40,7 +40,7 @@ class TileSlot
 
     /**
      * @var integer
-     * @ORM\Column(name="cards_count", type="integer")
+     * @ORM\Column(name="cards_count", type="integer", nullable=true)
      */
     protected $cardsCount;
 
@@ -59,25 +59,21 @@ class TileSlot
 
     /**
      * @var integer
-     * @ORM\Column(name="health", type="integer")
+     * @ORM\Column(name="health", type="integer", nullable=true)
      */
     protected $health;
 
-    /**
-     * @var integer
-     * @ORM\Column(name="max_percent", type="integer", nullable=true)
-     */
-    protected $maxPercent; //use for def decks in future
+
 
     /**
      * @var integer
-     * @ORM\Column(name="scout_status", type="integer")
+     * @ORM\Column(name="scout_status", type="integer", nullable=true)
      */
     protected $scoutStatus;
 
     /**
      * @var integer
-     * @ORM\Column(name="is_active", type="integer")
+     * @ORM\Column(name="is_active", type="integer", nullable=true)
      */
     protected $isActive;
 
@@ -112,29 +108,6 @@ class TileSlot
     public function getDeckHash()
     {
         return $this->deckHash;
-    }
-
-    /**
-     * Set maxPercent
-     *
-     * @param integer $maxPercent
-     * @return TileDeck
-     */
-    public function setMaxPercent($maxPercent)
-    {
-        $this->maxPercent = $maxPercent;
-    
-        return $this;
-    }
-
-    /**
-     * Get maxPercent
-     *
-     * @return integer 
-     */
-    public function getMaxPercent()
-    {
-        return $this->maxPercent;
     }
 
     /**

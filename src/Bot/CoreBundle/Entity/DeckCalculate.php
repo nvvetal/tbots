@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
  * DeckCalculate
  *
  * @ORM\Table(name="deck_calculate")
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="Bot\CoreBundle\Entity\DeckCalculateRepository")
  */
 class DeckCalculate
 {
@@ -16,9 +16,10 @@ class DeckCalculate
     const STATS_PROCESS = 2;
     const STATE_CALCULATED = 3;
     const STATE_ERROR = 4;
+    const STATE_DEFEAT = 5;
 
     const ENEMY_DECK_TYPE_MISSION = 1;
-    const ENEMY_DECK_TYPE_TILE = 2;
+    const ENEMY_DECK_TYPE_TILE_SLOT = 2;
 
     /**
      * @var integer
@@ -34,6 +35,12 @@ class DeckCalculate
      * @ORM\JoinColumn(name="bot_id", referencedColumnName="id", onDelete="CASCADE")
      */
     protected $bot;
+
+    /**
+     * @ORM\ManyToOne(targetEntity="TileSlot")
+     * @ORM\JoinColumn(name="tile_slot_id", referencedColumnName="id", onDelete="CASCADE", nullable=true)
+     */
+    protected $tileSlot;
 
     /**
      * @var integer

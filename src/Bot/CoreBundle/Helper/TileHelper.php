@@ -98,11 +98,15 @@ class TileHelper
                 $enemyFullDeck = $mergedDeckCards['cards'];
                 array_unshift($enemyFullDeck, $mergedDeckCards['commander']);
                 $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
-                $tileSlot->setDeckCards(json_encode($mergedDeckCards));
-                $tileSlot->setCardsCount(count($mergedDeckCards['cards']));
-                $tileSlot->setDeckHash($enemyHash);
                 $this->em->flush();
-                //TODO: throw event that deck changed
+                $dispatcher = $this->container->get('event_dispatcher');
+                $eventData = array(
+                    'deckCards' => $mergedDeckCards,
+                    'deckHash'  => $enemyHash,
+                    'health'    => $slotData['health'],
+                );
+                $event = new FilterTileSlotEvent($tileSlot, $eventData);
+                $dispatcher->dispatch(TileSlotEvents::TILE_SLOT_UPDATE, $event);
             }
         }catch(NoResultException $e) {
             $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
@@ -130,8 +134,7 @@ class TileHelper
             $eventData = array(
                 'deckCards' => $mergedDeckCards,
                 'deckHash'  => $enemyHash,
-                //TODO: get health somehow
-                'health'    => 0,
+                'health'    => $slotData['health'],
             );
             $event = new FilterTileSlotEvent($tileSlot, $eventData);
             $dispatcher->dispatch(TileSlotEvents::TILE_SLOT_UPDATE, $event);
@@ -219,8 +222,7 @@ class TileHelper
         $eventData = array(
             'deckCards' => $deckCards,
             'deckHash'  => $slotData['enemyDeckHash'],
-            //TODO: get health somehow
-            'health'    => 0,
+            'health'    => $slotData['health'],
         );
         $event = new FilterTileSlotEvent($tileSlot, $eventData);
         $dispatcher->dispatch(TileSlotEvents::TILE_SLOT_UPDATE, $event);

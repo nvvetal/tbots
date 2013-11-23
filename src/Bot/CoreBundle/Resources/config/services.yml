@@ -37,3 +37,15 @@ services:
     tags:
       - { name: kernel.event_listener, event: tile.slot.update, method: onUpdate }
 
+  listener.tile.slot.defeat:
+    class: Bot\CoreBundle\Listener\TileSlotListener
+    arguments:  [@service_container, @doctrine.orm.entity_manager]
+    tags:
+      - { name: kernel.event_listener, event: tile.slot.defeat, method: onDefeat }
+
+  listener.optimizer.tile.slot.stop.calculate:
+    class: Bot\CoreBundle\Listener\OptimizerListener
+    arguments:  [@service_container, @doctrine.orm.entity_manager]
+    tags:
+      - { name: kernel.event_listener, event: optimizer.tile.slot.stop.calculate, method: onStopTileSlotCalculate }
+
