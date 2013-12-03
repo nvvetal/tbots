@@ -22,7 +22,7 @@ class OptimizerListener
         if(count($attackers) == 0) return false;
         foreach($attackers as $attacker)
         {
-
+            //$this->optimizer->addDeckCalculate(Bot $bot, $deckType, $deckHash, $enemyOptions, $params);
         }
     }
 
