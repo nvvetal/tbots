@@ -13,4 +13,13 @@ class BotRepository extends EntityRepository
             )
             ->getResult();
     }
+
+    public function findAttackers()
+    {
+        return $this->getEntityManager()
+            ->createQuery(
+                'SELECT b FROM BotCoreBundle:Bot b WHERE b.isAttacker = 1'
+            )
+            ->getResult();
+    }
 }

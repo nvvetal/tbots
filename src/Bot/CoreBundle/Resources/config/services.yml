@@ -45,7 +45,13 @@ services:
 
   listener.optimizer.tile.slot.stop.calculate:
     class: Bot\CoreBundle\Listener\OptimizerListener
-    arguments:  [@service_container, @doctrine.orm.entity_manager]
+    arguments:  [@service_container, @doctrine.orm.entity_manager, @helper.optimizer]
     tags:
       - { name: kernel.event_listener, event: optimizer.tile.slot.stop.calculate, method: onStopTileSlotCalculate }
+
+  listener.optimizer.tile.slot.start.calculate:
+    class: Bot\CoreBundle\Listener\OptimizerListener
+    arguments:  [@service_container, @doctrine.orm.entity_manager, @helper.optimizer]
+    tags:
+      - { name: kernel.event_listener, event: optimizer.tile.slot.start.calculate, method: onStartTileSlotCalculate }
 

@@ -67,7 +67,7 @@ class TileHelper
         $tile->setSystemId($tileData['system_id']);
         $tile->setX($tileData['x']);
         $tile->setY($tileData['y']);
-        $tile->setEffect($tileData['effect']);
+        if(!empty($tileData['effect'])) $tile->setEffect($tileData['effect']);
         $tile->setAttackStartTime($tileData['attack_start_time']);
         $this->em->persist($tile);
         $this->em->flush();

@@ -119,6 +119,14 @@ class Bot
      */
     protected $isScout;
 
+    /**
+     * @var integer
+     * @ORM\Column(name="is_attacker", type="integer")
+     */
+    protected $isAttacker;
+
+
+
     public function setScout()
     {
         $this->isScout = 1;
@@ -126,7 +134,7 @@ class Bot
 
     public function unsetScout()
     {
-        $this->isScout = 1;
+        $this->isScout = 0;
     }
 
 
@@ -136,6 +144,24 @@ class Bot
     public function isScout()
     {
         return $this->isScout == 1;
+    }
+
+    public function setAttacker()
+    {
+        $this->isAttacker = 1;
+    }
+
+    public function unsetAttacker()
+    {
+        $this->isAttacker = 0;
+    }
+
+    /**
+     * @return bool
+     */
+    public function isAttacker()
+    {
+        return $this->isAttacker == 1;
     }
 
     /**
