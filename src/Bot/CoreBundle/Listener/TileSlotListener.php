@@ -39,6 +39,10 @@ class TileSlotListener
                     $event->getDispatcher()->dispatch(TileSlotEvents::TILE_SLOT_DEFEAT, $event);
                 }
             }
+            if(isset($data['isCardsDifferent']) && $data['isCardsDifferent'] == true){
+                $event->getDispatcher()->dispatch(OptimizerEvents::OPTIMIZER_TILE_SLOT_STOP_CALCULATE, $event);
+                $event->getDispatcher()->dispatch(OptimizerEvents::OPTIMIZER_TILE_SLOT_START_CALCULATE, $event);
+            }
             $this->em->flush();
         }catch(\Exception $e){
 

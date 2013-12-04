@@ -9,6 +9,7 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * @ORM\Table(name="deck_calculate")
  * @ORM\Entity(repositoryClass="Bot\CoreBundle\Entity\DeckCalculateRepository")
+ * @ORM\HasLifecycleCallbacks
  */
 class DeckCalculate
 {
@@ -17,6 +18,7 @@ class DeckCalculate
     const STATE_CALCULATED = 3;
     const STATE_ERROR = 4;
     const STATE_DEFEAT = 5;
+    const STATE_STOPPED = 6;
 
     const ENEMY_DECK_TYPE_MISSION = 1;
     const ENEMY_DECK_TYPE_TILE_SLOT = 2;
@@ -42,6 +44,7 @@ class DeckCalculate
      */
     protected $tileSlot;
 
+
     /**
      * @var integer
      * @ORM\Column(name="enemy_deck_type", type="integer")
@@ -62,19 +65,19 @@ class DeckCalculate
 
     /**
      * @var string
-     * @ORM\Column(name="calculated_hash", type="string")
+     * @ORM\Column(name="calculated_hash", type="string", nullable=true)
      */
     protected $calculatedHash;
 
     /**
      * @var integer
-     * @ORM\Column(name="calculated_percent", type="integer")
+     * @ORM\Column(name="calculated_percent", type="integer", nullable=true)
      */
     protected $calculatedPercent;
 
     /**
      * @var integer
-     * @ORM\Column(name="state", type="integer")
+     * @ORM\Column(name="state", type="integer", nullable=true)
      */
     protected $state;
 
@@ -87,7 +90,7 @@ class DeckCalculate
 
     /**
      * @var integer
-     * @ORM\Column(name="finished_time", type="integer")
+     * @ORM\Column(name="finished_time", type="integer", nullable=true)
      */
     protected $finishedTime;
 
@@ -307,4 +310,35 @@ class DeckCalculate
     {
         return $this->bot;
     }
+
+    /**
+     * @param mixed $tileSlot
+     */
+    public function setTileSlot($tileSlot)
+    {
+        $this->tileSlot = $tileSlot;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getTileSlot()
+    {
+        return $this->tileSlot;
+    }
+
+    /**
+     * @ORM\PrePersist()
+     */
+    public function prePersist()
+    {
+        if (is_null($this->getState())) {
+            $this->setState(self::STATE_NEW);
+        }
+        if (is_null($this->getCreatedTime())) {
+            $this->setCreatedTime(time());
+        }
+
+    }
+
 }

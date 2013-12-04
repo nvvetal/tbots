@@ -3,6 +3,7 @@ namespace Bot\CoreBundle\Entity;
 
 use Doctrine\ORM\EntityRepository;
 use Bot\CoreBundle\Entity\DeckCalculate;
+
 class DeckCalculateRepository extends EntityRepository
 {
 
@@ -15,7 +16,7 @@ class DeckCalculateRepository extends EntityRepository
                 WHERE dc.tileSlot = :tileSlot AND dc.state = :curState
 
             ')
-            ->setParameter(':state', DeckCalculate::STATE_DEFEAT)
+            ->setParameter(':state', DeckCalculate::STATE_STOPPED)
             ->setParameter(':tileSlot', $tileSlot)
             ->setParameter(':curState', DeckCalculate::STATE_NEW)
         ->execute()

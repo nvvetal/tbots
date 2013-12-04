@@ -3,6 +3,7 @@ namespace Bot\CoreBundle\Helper;
 
 use Bot\CoreBundle\Entity\Tile;
 use Bot\CoreBundle\Entity\TileSlot;
+use Bot\CoreBundle\OptimizerEvents;
 use Bot\CoreBundle\TileSlotEvents;
 use Bot\CoreBundle\Event\FilterTileSlotEvent;
 use Doctrine\ORM\NoResultException;
@@ -85,33 +86,53 @@ class TileHelper
     {
         if(is_null($tile->getFaction())) return $this->fillTileSlotWithoutOwner($tile, $slotId, $slotData);
         $tileSlot = NULL;
+        $dispatcher = $this->container->get('event_dispatcher');
+        $craftedDeckCards = $this->getDeckCards($slotData);
         try {
             $tileSlot = $this->em->getRepository('BotCoreBundle:TileSlot')
                 ->findActiveTileSlotByTileAndSlotId($tile, $slotId);
-            $craftedDeckCards = $this->getDeckCards($slotData);
             $currentDeckCards = json_decode($tileSlot->getDeckCards(), true);
             if(!$this->isCurrentDeckCardsValid($currentDeckCards, $craftedDeckCards)){
                 $this->em->getRepository('BotCoreBundle:TileSlot')->unsetActiveTileSlotByTileAndSlotId($tile, $slotId);
                 $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
+                $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($craftedDeckCards['cards'], false);
+                $eventData = array(
+                    'deckCards'         => $craftedDeckCards,
+                    'deckHash'          => $enemyHash,
+                    'health'            => $slotData['health'],
+                    'isCardsDifferent'  => true,
+                );
+                $event = new FilterTileSlotEvent($tileSlot, $eventData);
+                $dispatcher->dispatch(OptimizerEvents::OPTIMIZER_TILE_SLOT_START_CALCULATE, $event);
             }else{
                 $mergedDeckCards = $this->mergeDeckCards($currentDeckCards, $craftedDeckCards);
                 $enemyFullDeck = $mergedDeckCards['cards'];
                 array_unshift($enemyFullDeck, $mergedDeckCards['commander']);
                 $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
                 $this->em->flush();
-                $dispatcher = $this->container->get('event_dispatcher');
                 $eventData = array(
-                    'deckCards' => $mergedDeckCards,
-                    'deckHash'  => $enemyHash,
-                    'health'    => $slotData['health'],
+                    'deckCards'         => $mergedDeckCards,
+                    'deckHash'          => $enemyHash,
+                    'health'            => $slotData['health'],
+                    'isCardsDifferent'  => $this->isCardsDifferent($currentDeckCards['cards'], $mergedDeckCards['cards']),
                 );
                 $event = new FilterTileSlotEvent($tileSlot, $eventData);
                 $dispatcher->dispatch(TileSlotEvents::TILE_SLOT_UPDATE, $event);
             }
         }catch(NoResultException $e) {
             $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
+            $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($craftedDeckCards['cards'], false);
+            $eventData = array(
+                'deckCards'         => $craftedDeckCards,
+                'deckHash'          => $enemyHash,
+                'health'            => $slotData['health'],
+                'isCardsDifferent'  => false,
+            );
+            $event = new FilterTileSlotEvent($tileSlot, $eventData);
+            $dispatcher->dispatch(OptimizerEvents::OPTIMIZER_TILE_SLOT_START_CALCULATE, $event);
         }catch(\Exception $e){
-
+            echo $e->getMessage();
+            exit;
         }
         return $tileSlot;
     }
@@ -124,27 +145,50 @@ class TileHelper
                 ->findActiveTileSlotByTileAndSlotId($tile, $slotId);
             $craftedDeckCards = $this->getDeckCards($slotData);
             $currentDeckCards = json_decode($tileSlot->getDeckCards(), true);
-
             $mergedDeckCards = $this->mergeDeckCards($currentDeckCards, $craftedDeckCards);
-
             $enemyFullDeck = $mergedDeckCards['cards'];
             array_unshift($enemyFullDeck, $mergedDeckCards['commander']);
             $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($enemyFullDeck, false);
             $dispatcher = $this->container->get('event_dispatcher');
             $eventData = array(
-                'deckCards' => $mergedDeckCards,
-                'deckHash'  => $enemyHash,
-                'health'    => $slotData['health'],
+                'deckCards'         => $mergedDeckCards,
+                'deckHash'          => $enemyHash,
+                'health'            => $slotData['health'],
+                'isCardsDifferent'  => $this->isCardsDifferent($currentDeckCards['cards'], $mergedDeckCards['cards']),
             );
             $event = new FilterTileSlotEvent($tileSlot, $eventData);
             $dispatcher->dispatch(TileSlotEvents::TILE_SLOT_UPDATE, $event);
         }catch(NoResultException $e) {
             $tileSlot = $this->createTileSlot($tile, $slotId, $slotData);
+            $enemyHash = $this->container->get('helper.deck')->getDeckHashFromCards($craftedDeckCards['cards'], false);
+            $eventData = array(
+                'deckCards'         => $craftedDeckCards,
+                'deckHash'          => $enemyHash,
+                'health'            => $slotData['health'],
+                'isCardsDifferent'  => false,
+            );
+            $event = new FilterTileSlotEvent($tileSlot, $eventData);
+            $dispatcher->dispatch(OptimizerEvents::OPTIMIZER_TILE_SLOT_START_CALCULATE, $event);
         }catch(\Exception $e){
             echo $e->getMessage();
             exit;
         }
         return $tileSlot;
+    }
+
+    private function isCardsDifferent($cards1, $cards2)
+    {
+        if(count($cards1) != count($cards2)) return true;
+        $cards1 = $this->getDeckCardsCounted($cards1);
+        ksort($cards1);
+        $cards2 = $this->getDeckCardsCounted($cards2);
+        ksort($cards2);
+        if(count($cards1) != count($cards2)) return true;
+        foreach($cards1 as $cardId => $cardsCount)
+        {
+            if(!isset($cards2[$cardId]) || $cardsCount != $cards2[$cardId]) return true;
+        }
+        return false;
     }
 
     private function isCurrentDeckCardsValid($currentDeckCards, $craftedDeckCards)
@@ -175,7 +219,9 @@ class TileHelper
         $craftedDeckCardsCounted = $this->getDeckCardsCounted($craftedDeckCards);
         $mergedDeckCards = array();
         foreach ($currentDeckCardsCounted as $cardId => $cardCount){
-            $mergedDeckCards[] = $cardId;
+            for ($i = 0; $i < $cardCount; $i++){
+                $mergedDeckCards[] = $cardId;
+            }
         }
         foreach ($craftedDeckCardsCounted as $cardId => $cardCount)
         {

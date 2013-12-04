@@ -77,7 +77,6 @@ class MainController extends Controller
                 continue;
             }
             $tileHelper->fillTileSlot($tileActive, $slotId, $res['slotData']);
-            //exit;
             sleep(10);
         }
         echo "DONE";

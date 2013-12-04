@@ -1,6 +1,8 @@
 <?php
 namespace Bot\CoreBundle\Listener;
 use Bot\CoreBundle\OptimizerEvents;
+use Bot\CoreBundle\Entity\DeckCalculate;
+use Bot\CoreBundle\Event\FilterTileSlotEvent;
 
 class OptimizerListener
 {
@@ -17,12 +19,20 @@ class OptimizerListener
 
     public function onStartTileSlotCalculate(FilterTileSlotEvent $event)
     {
-        //todo: get all attackers and send to calculate
         $attackers = $this->em->getRepository('BotCoreBundle:Bot')->findAttackers();
         if(count($attackers) == 0) return false;
+
+        $tileSlot = $event->getTileSlot();
+        $data = $event->getSlotData();
+        $enemyOptions = array();
+        $tile = $tileSlot->getTile();
+        if(!is_null($tile->getEffect())) $enemyOptions['effect'] = $tile->getEffect();
+        $params = array(
+            'tileSlot' => $tileSlot,
+        );
         foreach($attackers as $attacker)
         {
-            //$this->optimizer->addDeckCalculate(Bot $bot, $deckType, $deckHash, $enemyOptions, $params);
+            $this->optimizer->addDeckCalculate($attacker, DeckCalculate::ENEMY_DECK_TYPE_TILE_SLOT, $data['deckHash'], $enemyOptions, $params);
         }
     }
 

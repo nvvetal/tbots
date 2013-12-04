@@ -4,6 +4,7 @@ namespace Bot\CoreBundle\Helper;
 use Bot\CoreBundle\Helper\CardsHelper;
 use Bot\CoreBundle\Helper\DeckHelper;
 use Bot\CoreBundle\Entity\Bot;
+use Bot\CoreBundle\Entity\DeckCalculate;
 
 class OptimizerHelper
 {
@@ -101,7 +102,26 @@ class OptimizerHelper
 
     public function addDeckCalculate(Bot $bot, $deckType, $deckHash, $enemyOptions, $params)
     {
-
+        try{
+            $em = $this->container->get('Doctrine')->getManager();
+            $deckCalculate = new DeckCalculate();
+            $deckCalculate->setEnemyDeckType(DeckCalculate::ENEMY_DECK_TYPE_TILE_SLOT);
+            $deckCalculate->setBot($bot);
+            $deckCalculate->setEnemyDeckHash($deckHash);
+            $deckCalculate->setEnemyOptions(json_encode($enemyOptions));
+            switch($deckType)
+            {
+                case DeckCalculate::ENEMY_DECK_TYPE_TILE_SLOT:
+                    $tileSlot = $params['tileSlot'];
+                    $deckCalculate->setTileSlot($tileSlot);
+                    break;
+            }
+            $em->persist($deckCalculate);
+            $em->flush();
+        }catch(\Exception $e)
+        {
+            echo $e->getMessage();
+        }
     }
 
     protected function getDefaultDeckHash()
